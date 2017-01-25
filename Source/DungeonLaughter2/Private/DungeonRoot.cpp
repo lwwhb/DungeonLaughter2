@@ -18,7 +18,9 @@ ADungeonRoot::ADungeonRoot()
 	MaxSplitAreaSize = 9;
 	MinAreaSize = 3;
 	MinSpecialAreaSize = 4;
-	IsDoublePath = false;
+	UseDoublePath = false;
+	UseBranchExit = false;
+	UseLoopBranchPath = false;
 	SecondaryAreaRatio = 0.0f;
 }
 
@@ -37,8 +39,9 @@ void ADungeonRoot::Tick( float DeltaTime )
 
 void ADungeonRoot::GenerateDungeon2dData()
 {
-	if (!DungeonGenerator::getInstance()->setGeneratorSetting(MinSplitAreaSize, MaxSplitAreaSize, MinAreaSize, MinSpecialAreaSize, IsDoublePath, SecondaryAreaRatio))
+	if (!DungeonGenerator::getInstance()->setGeneratorSetting(CellCountX, CellCountY, MinSplitAreaSize, MaxSplitAreaSize, MinAreaSize, MinSpecialAreaSize,
+		UseDoublePath, UseBranchExit, UseLoopBranchPath, SecondaryAreaRatio))
 		return;
-	if(!DungeonGenerator::getInstance()->generateDungeon(CellCountX, CellCountY))
+	if(!DungeonGenerator::getInstance()->generateDungeon())
 		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon failed!"));
 }

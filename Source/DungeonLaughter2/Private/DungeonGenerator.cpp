@@ -14,20 +14,54 @@ DungeonGenerator* DungeonGenerator::getInstance()
 	return g_pDungeonGeneratorInstance;
 }
 DungeonGenerator::DungeonGenerator()
-	:m_pAreaEntrance(nullptr), m_pAreaExit(nullptr)
+	:m_pAreaEntrance(nullptr), m_pAreaExit(nullptr), m_pAreaBranchExit(nullptr)
 {
-	m_nSpecialAreaCount = 0;
-	m_nMainPathAreasCount = 0;
-	m_nSidePathAreasCount = 0;
-	m_nSecondaryAreasCount = 0;
+	m_bDoublePath			= false;
+	m_bBranchPath			= false;
+	m_bLoopBranchPath		= false;
+	m_fSecondaryAreaRatio	= 0.0f;
+
+	m_nWidth				= 0;	
+	m_nHeight				= 0;
+
+	m_nMinSplitAreaSize		= 0;
+	m_nMaxSplitAreaSize		= 0;
+	m_nMinAreaSize			= 0;
+	m_nMinSpecialAreaSize	= 0;
+
+	m_nSpecialAreaCount		= 0;
+	m_nMainPathAreasCount	= 0;
+	m_nSidePathAreasCount	= 0;
+	m_nBranchPathAreasCount = 0;
+	m_nSecondaryAreasCount	= 0;
 }
 
 DungeonGenerator::~DungeonGenerator()
 {
 }
-bool DungeonGenerator::setGeneratorSetting(int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize, 
-	bool doublePath, float secondaryAreaRatio)
+bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
+	bool doublePath, bool branchPath, bool loopBranchPath, float secondaryAreaRatio)
 {
+	if (width > 96 || width < 32)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("CellCountX value must between 32 to 96.")));
+		return false;
+	}
+	if (height > 96 || height < 32)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("CellCountY value must between 32 to 96.")));
+		return false;
+	}
+	if (maxSplitAreaSize > 16 || maxSplitAreaSize < 8)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MaxSplitAreaSize value must between 8 to 16.")));
+		return false;
+	}
+	if (minSplitAreaSize > 16 || minSplitAreaSize < 4)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MaxSplitAreaSize value must between 4 to 16.")));
+		return false;
+	}
 	if (minSplitAreaSize > maxSplitAreaSize)
 	{
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MinSplitAreaSize must be less than MaxSplitAreaSize or Equal.")));
@@ -48,19 +82,21 @@ bool DungeonGenerator::setGeneratorSetting(int minSplitAreaSize, int maxSplitAre
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("SecondaryAreaRatio value must between 0.0f~0.5f")));
 		return false;
 	}
+	m_nWidth = width;
+	m_nHeight = height;
 	m_nMinSplitAreaSize = minSplitAreaSize;
 	m_nMaxSplitAreaSize = maxSplitAreaSize;
 	m_nMinAreaSize = minAreaSize; ///最小区域大小
 	m_nMinSpecialAreaSize = minSpecialAreaSize; ///最小特殊区域大小
 	m_bDoublePath = doublePath;
+	m_bBranchPath = branchPath;
+	m_bLoopBranchPath = loopBranchPath;
 	m_fSecondaryAreaRatio = secondaryAreaRatio;
 	return true;
 }
-bool DungeonGenerator::generateDungeon(int Width, int Height)
+bool DungeonGenerator::generateDungeon()
 {
-	m_nWidth = Width;
-	m_nHeight = Height;
-	if (!initAreas(FBox2D(FVector2D(0, 0), FVector2D(Width, Height))))
+	if (!initAreas(FBox2D(FVector2D(0, 0), FVector2D(m_nWidth, m_nHeight))))
 	{
 		UE_LOG(LogTemp, Fatal, TEXT("Init areas failed!"));
 		return false;
@@ -177,15 +213,48 @@ bool DungeonGenerator::connectArea()
 
 		distance = m_pAreaEntrance->getDistance();
 #if WITH_EDITOR
-		UE_LOG(LogTemp, Warning, TEXT("retry time = %d"), retry++);
+		UE_LOG(LogTemp, Warning, TEXT("generate entrance and exit retry time = %d"), retry++);
 #endif // WITH_EDITOR
 	} while (distance < minDistance);
 
-	m_pAreaEntrance->setAreaType(EAreaTypeEnum::ATE_Entrance);
-	m_pAreaEntrance->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Entrance);
+	if (m_bBranchPath)
+	{
+		int distance1 = 0;
+		int distance2 = 0;
+		int retry1 = 0;
+		do
+		{
+			do
+			{
+				int rand = FMath::RandRange(0, (int)(m_Areas.size()) - 1);
+				m_pAreaBranchExit = static_cast<Area*>(m_Areas[rand]);
+			} while (m_pAreaBranchExit->getRect().GetSize().X < 4 || m_pAreaBranchExit->getRect().GetSize().Y < 4);
 
-	m_pAreaExit->setAreaType(EAreaTypeEnum::ATE_Exit);
-	m_pAreaExit->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Exit);
+			PathGraph::buildDistanceMap(m_Areas, m_pAreaBranchExit);
+
+			distance1 = m_pAreaEntrance->getDistance();
+			distance2 = m_pAreaExit->getDistance();
+#if WITH_EDITOR
+			UE_LOG(LogTemp, Warning, TEXT("generate branch exit retry time = %d"), retry1++);
+#endif // WITH_EDITOR
+		} while (distance1 < (int)sqrt(minDistance) || distance2 < (int)sqrt(minDistance));
+	}
+
+	if (m_pAreaEntrance)
+	{
+		m_pAreaEntrance->setAreaType(EAreaTypeEnum::ATE_Entrance);
+		m_pAreaEntrance->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Entrance);
+	}
+	if (m_pAreaExit)
+	{
+		m_pAreaExit->setAreaType(EAreaTypeEnum::ATE_Exit);
+		m_pAreaExit->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Exit);
+	}
+	if (m_pAreaBranchExit)
+	{
+		m_pAreaBranchExit->setAreaType(EAreaTypeEnum::ATE_Branch_Exit);
+		m_pAreaBranchExit->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Branch_Exit);
+	}
 
 	///生成第一条路径
 	m_ConnectedAreas.push_back(m_pAreaEntrance);
@@ -231,6 +300,53 @@ bool DungeonGenerator::connectArea()
 			}
 		}
 	}
+	///生成分支路径
+	if (m_bBranchPath)
+	{
+		///生成第一条分支路径
+		PathGraph::buildDistanceMap(m_Areas, m_pAreaBranchExit);
+
+		std::vector<PathGraphNode*> branchPath = PathGraph::buildPath(m_Areas, m_pAreaEntrance, m_pAreaBranchExit);
+		Area* startArea1 = m_pAreaEntrance;
+		for (PathGraphNode* node : branchPath) {
+			Area* next = static_cast<Area*>(node);
+			if (next)
+			{
+				startArea1->connectArea(next);
+				startArea1 = next;
+				if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
+				{
+					startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
+					m_nBranchPathAreasCount++;
+				}
+				m_ConnectedAreas.push_back(startArea1);
+			}
+		}
+		PathGraph::setWeight(branchPath, m_pAreaBranchExit->getDistance());
+		///生成回路分支路径
+		if (m_bLoopBranchPath)
+		{
+			PathGraph::buildDistanceMap(m_Areas, m_pAreaExit);
+			branchPath = PathGraph::buildPath(m_Areas, m_pAreaBranchExit, m_pAreaExit);
+
+			startArea1 = m_pAreaBranchExit;
+			for (PathGraphNode* node : branchPath) {
+				Area* next = static_cast<Area*>(node);
+				if (next)
+				{
+					startArea1->connectArea(next);
+					startArea1 = next;
+					if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
+					{
+						startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
+						m_nBranchPathAreasCount++;
+					}
+					m_ConnectedAreas.push_back(startArea1);
+				}
+			}
+		}
+	}
+
 	///生成次要区域
 	if (m_fSecondaryAreaRatio > 0.0f)
 	{

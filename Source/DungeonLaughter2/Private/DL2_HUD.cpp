@@ -92,7 +92,7 @@ void ADL2_HUD::DrawConnectAreas()
 					DrawRect(FLinearColor(FColor::Orange), rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
 				else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SidePath)
 					DrawRect(FLinearColor::Blue, rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
-				else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SecondaryArea)
+				else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_BranchPath)
 					DrawRect(FLinearColor(FColor::Cyan), rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
 				else
 					DrawRect(FLinearColor::Gray, rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
@@ -154,12 +154,45 @@ void ADL2_HUD::DrawEntranceAreaAndExitArea()
 		FBox2D rect = exitArea->getRect();
 		DrawRect(FLinearColor::Green, rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
 	}
+	Area* branchExitArea = DungeonGenerator::getInstance()->getBranchExitArea();
+	if (branchExitArea)
+	{
+		FBox2D rect = branchExitArea->getRect();
+		DrawRect(FLinearColor::Yellow, rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
+	}
 }
 void ADL2_HUD::DrawStatistics()
 {
 	int width = DungeonGenerator::getInstance()->getWidth();
 	int height = DungeonGenerator::getInstance()->getHeight();
-	DrawRect(FLinearColor::Gray, (width+2)*unit, unit, width*unit, width*unit);
-	DrawText("Entrance Area count : 0", FLinearColor::Red, (width + 2)*unit, unit);
+	Area* entranceArea = DungeonGenerator::getInstance()->getEntranceArea();
+	if (entranceArea)
+		DrawText("Entrance Area count : 1", FLinearColor::Red, (width + 2)*unit, unit);
+	else
+		DrawText("Entrance Area count : 0", FLinearColor::Red, (width + 2)*unit, unit);
+
+	Area* exitArea = DungeonGenerator::getInstance()->getExitArea();
+	if (exitArea)
+		DrawText("Exit Area count : 1", FLinearColor::Green, (width + 2)*unit, unit*3);
+	else
+		DrawText("Exit Area count : 0", FLinearColor::Green, (width + 2)*unit, unit*3);
+
+	Area* branchExitArea = DungeonGenerator::getInstance()->getBranchExitArea();
+	if (branchExitArea)
+		DrawText("Branch Exit Area count : 1", FLinearColor::Yellow, (width + 2)*unit, unit * 5);
+	else
+		DrawText("Branch Exit Area count : 0", FLinearColor::Yellow, (width + 2)*unit, unit * 5);
+
+	FString text = "Main Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getMainPathAreasCount());
+	DrawText(text, FLinearColor(FColor::Orange), (width + 2)*unit, unit * 7);
+
+	text = "Side Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSidePathAreasCount());
+	DrawText(text, FLinearColor(FColor::Blue), (width + 2)*unit, unit * 9);
+
+	text = "Branch Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getBranchPathAreasCount());
+	DrawText(text, FLinearColor(FColor::Cyan), (width + 2)*unit, unit * 11);
+
+	text = "Secondary Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSecondaryAreasCount());
+	DrawText(text, FLinearColor::Black, (width + 2)*unit, unit * 13);
 }
 #endif // WITH_EDITOR

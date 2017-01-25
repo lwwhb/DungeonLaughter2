@@ -25,15 +25,16 @@ public:
 
 	static DungeonGenerator* getInstance();
 
-	bool setGeneratorSetting(int minSplitAreaSize = 7, int maxSplitAreaSize = 9, int minAreaSize = 3, int minSpecialAreaSize = 4,
-		bool doublePath = false, float secondaryAreaRatio = 0.0f);
-	bool generateDungeon(int Width, int Height);
+	bool setGeneratorSetting(int width, int height, int minSplitAreaSize = 7, int maxSplitAreaSize = 9, int minAreaSize = 3, int minSpecialAreaSize = 4,
+		bool doublePath = false, bool branchPath = false, bool loopBranchPath = false, float secondaryAreaRatio = 0.0f);
+	bool generateDungeon();
 
 	std::vector<PathGraphNode*>& getAreas();
 	std::vector<Area*>& getConnectedAreas();
 
 	Area* getEntranceArea() const { return m_pAreaEntrance; }
 	Area* getExitArea() const { return m_pAreaExit; }
+	Area* getBranchExitArea() const { return m_pAreaBranchExit; }
 
 	int getWidth() const { return m_nWidth; }
 	int getHeight() const { return m_nHeight; }
@@ -41,6 +42,7 @@ public:
 	///获取统计数据
 	int getMainPathAreasCount() const { return m_nMainPathAreasCount; }
 	int getSidePathAreasCount() const { return m_nSidePathAreasCount; }
+	int getBranchPathAreasCount() const { return m_nBranchPathAreasCount; }
 	int getSecondaryAreasCount() const { return m_nSecondaryAreasCount; }
 protected:
 	virtual bool initAreas(const FBox2D& rect);
@@ -51,7 +53,10 @@ private:
 	std::vector<PathGraphNode*>    m_Areas;
 	Area*				m_pAreaEntrance;
 	Area*				m_pAreaExit;
+	Area*				m_pAreaBranchExit;
 	bool				m_bDoublePath;
+	bool				m_bBranchPath;
+	bool				m_bLoopBranchPath;
 	float				m_fSecondaryAreaRatio;
 
 	std::vector<Area*> m_ConnectedAreas;
@@ -68,6 +73,7 @@ private:
 	///统计数据
 	int		m_nMainPathAreasCount;	///主路径区域数
 	int		m_nSidePathAreasCount;  ///辅路径区域数
+	int		m_nBranchPathAreasCount;///分支路径区域数
 	int		m_nSecondaryAreasCount;	///次要区域数
 
 	int		m_nSpecialAreaCount;	///特殊区域计数器

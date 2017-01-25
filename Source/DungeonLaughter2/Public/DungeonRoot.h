@@ -29,7 +29,11 @@ public:
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Special Area minimum size. Value must more than MinAreaSize."))
 	int MinSpecialAreaSize;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate two path from entrance to exit."))
-	bool IsDoublePath;
+	bool UseDoublePath;
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate branch exit."))
+	bool UseBranchExit;
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate looped branch path."))
+	bool UseLoopBranchPath;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))
 	float SecondaryAreaRatio;
 

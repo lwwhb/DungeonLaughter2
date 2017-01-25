@@ -27,6 +27,7 @@ enum class EAreaTypeMaskEnum : uint8
 	ATME_Branch_Exit		UMETA(DisplayName = "Branch_Exit"),
 	ATME_MainPath 			UMETA(DisplayName = "MainPath"),
 	ATME_SidePath			UMETA(DisplayName = "SidePath"),
+	ATME_BranchPath			UMETA(DisplayName = "BranchPath"),
 	ATME_SecondaryArea		UMETA(DisplayName = "SecondaryArea")
 };
 class Area : public PathGraphNode
