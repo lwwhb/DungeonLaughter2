@@ -40,7 +40,7 @@ DungeonGenerator::~DungeonGenerator()
 {
 }
 bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
-	bool doublePath, bool branchPath, bool loopBranchPath, float secondaryAreaRatio)
+	bool doublePath, bool branchPath, bool loopBranchPath, bool isImpasse, float secondaryAreaRatio)
 {
 	if (width > 96 || width < 32)
 	{
@@ -77,6 +77,16 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAr
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MinSpecialAreaSize value must be more than MinAreaSize value.")));
 		return false;
 	}
+	if (loopBranchPath && !branchPath)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it doesn't generate branch path, you can't loop the branch path.")));
+		return false;
+	}
+	if (isImpasse && branchPath)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it's impasse dungeon, it can't generate branch path.")));
+		return false;
+	}
 	if (secondaryAreaRatio < 0.0f || secondaryAreaRatio > 0.5f)
 	{
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("SecondaryAreaRatio value must between 0.0f~0.5f")));
@@ -91,6 +101,7 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAr
 	m_bDoublePath = doublePath;
 	m_bBranchPath = branchPath;
 	m_bLoopBranchPath = loopBranchPath;
+	m_bIsImpasse = isImpasse;
 	m_fSecondaryAreaRatio = secondaryAreaRatio;
 	return true;
 }
@@ -104,6 +115,11 @@ bool DungeonGenerator::generateDungeon()
 	if (!connectArea())
 	{
 		UE_LOG(LogTemp, Fatal, TEXT("Connect areas failed!"));
+		return false;
+	}
+	if (!assignAreasType())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Assign areas type failed!"));
 		return false;
 	}
 	return true;
@@ -380,11 +396,78 @@ bool DungeonGenerator::connectArea()
 
 bool DungeonGenerator::assignAreasType()
 {
+	///∑÷¿Î ˝◊È≈≈–Ú
+	std::vector<Area*> m_MainPathAreas;
+	std::vector<Area*> m_SidePathAreas;
+	std::vector<Area*> m_BranchPathAreas;
+	std::vector<Area*> m_SecondaryPathAreas;
+	std::vector<Area*>::iterator iter;
 	for (Area* area : m_ConnectedAreas) {
 		if (area)
 		{
-			if (area->getAreaType() == EAreaTypeEnum::ATE_Unknown && area->getConnectedAreas().size() == 1)
+			if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_MainPath)
 			{
+				if (m_MainPathAreas.empty())
+					m_MainPathAreas.push_back(area);
+				else
+				{
+					for (iter = m_MainPathAreas.begin(); iter != m_MainPathAreas.end(); iter++)
+					{
+						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
+						{
+							m_MainPathAreas.insert(iter, area);
+							break;
+						}
+					}
+				}
+			}
+			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SidePath)
+			{
+				if (m_SidePathAreas.empty())
+					m_SidePathAreas.push_back(area);
+				else
+				{
+					for (iter = m_SidePathAreas.begin(); iter != m_SidePathAreas.end(); iter++)
+					{
+						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
+						{
+							m_SidePathAreas.insert(iter, area);
+							break;
+						}
+					}
+				}
+			}
+			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_BranchPath)
+			{
+				if (m_BranchPathAreas.empty())
+					m_BranchPathAreas.push_back(area);
+				else
+				{
+					for (iter = m_BranchPathAreas.begin(); iter != m_BranchPathAreas.end(); iter++)
+					{
+						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
+						{
+							m_BranchPathAreas.insert(iter, area);
+							break;
+						}
+					}
+				}
+			}
+			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SecondaryArea)
+			{
+				if (m_SecondaryPathAreas.empty())
+					m_SecondaryPathAreas.push_back(area);
+				else
+				{
+					for (iter = m_SecondaryPathAreas.begin(); iter != m_SecondaryPathAreas.end(); iter++)
+					{
+						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
+						{
+							m_SecondaryPathAreas.insert(iter, area);
+							break;
+						}
+					}
+				}
 			}
 		}
 	}

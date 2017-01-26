@@ -14,6 +14,8 @@ enum class EAreaTypeEnum : uint8
 {
 	ATE_Unknown 	UMETA(DisplayName = "Unknown"),
 	ATE_Standard 	UMETA(DisplayName = "Standard"),
+	ATE_Passage		UMETA(DisplayName = "Passage"),
+	ATE_Tunnel		UMETA(DisplayName = "Tunnel"),
 	ATE_Entrance	UMETA(DisplayName = "Entrance"),
 	ATE_Exit		UMETA(DisplayName = "Exit"),
 	ATE_Branch_Exit UMETA(DisplayName = "Branch_Exit")

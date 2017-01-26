@@ -15,6 +15,8 @@ enum class EDungeonStyle : uint8
 {
 	DSE_Unknown 	UMETA(DisplayName = "Unknown"),
 	DSE_Standard 	UMETA(DisplayName = "Standard"),
+	DSE_Passage		UMETA(DisplayName = "Passage"),
+	DSE_Tunnel		UMETA(DisplayName = "Tunnel")
 };
 
 class DungeonGenerator
@@ -26,7 +28,7 @@ public:
 	static DungeonGenerator* getInstance();
 
 	bool setGeneratorSetting(int width, int height, int minSplitAreaSize = 7, int maxSplitAreaSize = 9, int minAreaSize = 3, int minSpecialAreaSize = 4,
-		bool doublePath = false, bool branchPath = false, bool loopBranchPath = false, float secondaryAreaRatio = 0.0f);
+		bool doublePath = false, bool branchPath = false, bool loopBranchPath = false, bool isImpasse = false, float secondaryAreaRatio = 0.0f);
 	bool generateDungeon();
 
 	std::vector<PathGraphNode*>& getAreas();
@@ -57,6 +59,7 @@ private:
 	bool				m_bDoublePath;
 	bool				m_bBranchPath;
 	bool				m_bLoopBranchPath;
+	bool				m_bIsImpasse;
 	float				m_fSecondaryAreaRatio;
 
 	std::vector<Area*> m_ConnectedAreas;

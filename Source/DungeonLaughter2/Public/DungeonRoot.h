@@ -3,6 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
+#include "../Private/DungeonGenerator.h"
 #include "DungeonRoot.generated.h"
 
 UCLASS(Blueprintable)
@@ -10,7 +11,8 @@ class DUNGEONLAUGHTER2_API ADungeonRoot : public AActor
 {
 	GENERATED_BODY()
 public:	
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Dungeon Style."))
+	EDungeonStyle DungeonStyle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "X axis cells count."))
 	int CellCountX;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Y axis cells count"))
@@ -34,6 +36,8 @@ public:
 	bool UseBranchExit;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate looped branch path."))
 	bool UseLoopBranchPath;
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether the dungeon is impasse."))
+	bool IsImpasse;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))
 	float SecondaryAreaRatio;
 

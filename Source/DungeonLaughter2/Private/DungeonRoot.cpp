@@ -2,13 +2,14 @@
 
 #include "DungeonLaughter2.h"
 #include "DungeonRoot.h"
-#include "../Private/DungeonGenerator.h"
 
 // Sets default values
 ADungeonRoot::ADungeonRoot()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	DungeonStyle = EDungeonStyle::DSE_Standard;
 	CellCountX = 48;
 	CellCountY = 32;
 	CellTotalCount = CellCountX * CellCountY;
@@ -21,6 +22,7 @@ ADungeonRoot::ADungeonRoot()
 	UseDoublePath = false;
 	UseBranchExit = false;
 	UseLoopBranchPath = false;
+	IsImpasse = false;
 	SecondaryAreaRatio = 0.0f;
 }
 
@@ -40,7 +42,7 @@ void ADungeonRoot::Tick( float DeltaTime )
 void ADungeonRoot::GenerateDungeon2dData()
 {
 	if (!DungeonGenerator::getInstance()->setGeneratorSetting(CellCountX, CellCountY, MinSplitAreaSize, MaxSplitAreaSize, MinAreaSize, MinSpecialAreaSize,
-		UseDoublePath, UseBranchExit, UseLoopBranchPath, SecondaryAreaRatio))
+		UseDoublePath, UseBranchExit, UseLoopBranchPath, IsImpasse, SecondaryAreaRatio))
 		return;
 	if(!DungeonGenerator::getInstance()->generateDungeon())
 		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon failed!"));
