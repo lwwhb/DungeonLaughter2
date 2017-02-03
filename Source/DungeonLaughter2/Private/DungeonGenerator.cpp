@@ -14,26 +14,8 @@ DungeonGenerator* DungeonGenerator::getInstance()
 	return g_pDungeonGeneratorInstance;
 }
 DungeonGenerator::DungeonGenerator()
-	:m_pAreaEntrance(nullptr), m_pAreaExit(nullptr), m_pAreaBranchExit(nullptr)
 {
-	m_bDoublePath			= false;
-	m_bBranchPath			= false;
-	m_bLoopBranchPath		= false;
-	m_fSecondaryAreaRatio	= 0.0f;
-
-	m_nWidth				= 0;	
-	m_nHeight				= 0;
-
-	m_nMinSplitAreaSize		= 0;
-	m_nMaxSplitAreaSize		= 0;
-	m_nMinAreaSize			= 0;
-	m_nMinSpecialAreaSize	= 0;
-
-	m_nSpecialAreaCount		= 0;
-	m_nMainPathAreasCount	= 0;
-	m_nSidePathAreasCount	= 0;
-	m_nBranchPathAreasCount = 0;
-	m_nSecondaryAreasCount	= 0;
+	reset();
 }
 
 DungeonGenerator::~DungeonGenerator()
@@ -42,6 +24,7 @@ DungeonGenerator::~DungeonGenerator()
 bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
 	bool doublePath, bool branchPath, bool loopBranchPath, bool isImpasse, float secondaryAreaRatio)
 {
+	reset();
 	if (width > 96 || width < 32)
 	{
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("CellCountX value must between 32 to 96.")));
@@ -133,8 +116,32 @@ std::vector<Area*>& DungeonGenerator::getConnectedAreas()
 {
 	return m_ConnectedAreas;
 }
-bool DungeonGenerator::initAreas(const FBox2D& rect)
+std::vector<Area*>& DungeonGenerator::getPivotalAreas()
 {
+	return m_PivotalAreas;
+}
+std::vector<Area*>& DungeonGenerator::getSpecialAreas()
+{
+	return m_SpecialAreas;
+}
+void DungeonGenerator::reset()
+{
+	m_pAreaEntrance = nullptr;
+	m_pAreaExit = nullptr;
+	m_pAreaBranchExit = nullptr;
+
+	if (!m_MainPathAreas.empty())
+		m_MainPathAreas.clear();
+	if (!m_SidePathAreas.empty())
+		m_SidePathAreas.clear();
+	if (!m_BranchPathAreas.empty())
+		m_BranchPathAreas.clear();
+	if (!m_SecondaryPathAreas.empty())
+		m_SecondaryPathAreas.clear();
+	if (!m_PivotalAreas.empty())
+		m_PivotalAreas.clear();
+	if (!m_SpecialAreas.empty())
+		m_SpecialAreas.clear();
 	if (!m_ConnectedAreas.empty())
 		m_ConnectedAreas.clear();
 	if (!m_Areas.empty())
@@ -150,7 +157,30 @@ bool DungeonGenerator::initAreas(const FBox2D& rect)
 		}
 		m_Areas.clear();
 	}
-	
+
+	m_bDoublePath = false;
+	m_bBranchPath = false;
+	m_bLoopBranchPath = false;
+	m_bIsImpasse = false;
+	m_fSecondaryAreaRatio = 0.0f;
+
+	m_nWidth = 0;
+	m_nHeight = 0;
+
+	m_nMinSplitAreaSize = 0;
+	m_nMaxSplitAreaSize = 0;
+	m_nMinAreaSize = 0;
+	m_nMinSpecialAreaSize = 0;
+
+	m_nMainPathAreasCount = 0;
+	m_nSidePathAreasCount = 0;
+	m_nBranchPathAreasCount = 0;
+	m_nSecondaryAreasCount = 0;
+	m_nPivotalAreasCount = 0;
+	m_nSpecialAreaCount = 0;
+}
+bool DungeonGenerator::initAreas(const FBox2D& rect)
+{	
 	splitArea(rect);
 
 	if (m_Areas.size() < 8) {
@@ -393,84 +423,112 @@ bool DungeonGenerator::connectArea()
 #endif // WITH_EDITOR
 	return true;
 }
-
+bool compareFunc(Area*& first, Area*& second)
+{ 
+	return first->getRect().GetArea() > second->getRect().GetArea();
+}
 bool DungeonGenerator::assignAreasType()
 {
 	///∑÷¿Î ˝◊È≈≈–Ú
-	std::vector<Area*> m_MainPathAreas;
-	std::vector<Area*> m_SidePathAreas;
-	std::vector<Area*> m_BranchPathAreas;
-	std::vector<Area*> m_SecondaryPathAreas;
 	std::vector<Area*>::iterator iter;
 	for (Area* area : m_ConnectedAreas) {
 		if (area)
 		{
 			if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_MainPath)
-			{
-				if (m_MainPathAreas.empty())
-					m_MainPathAreas.push_back(area);
-				else
-				{
-					for (iter = m_MainPathAreas.begin(); iter != m_MainPathAreas.end(); iter++)
-					{
-						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
-						{
-							m_MainPathAreas.insert(iter, area);
-							break;
-						}
-					}
-				}
-			}
+				m_MainPathAreas.push_back(area);
 			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SidePath)
-			{
-				if (m_SidePathAreas.empty())
-					m_SidePathAreas.push_back(area);
-				else
-				{
-					for (iter = m_SidePathAreas.begin(); iter != m_SidePathAreas.end(); iter++)
-					{
-						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
-						{
-							m_SidePathAreas.insert(iter, area);
-							break;
-						}
-					}
-				}
-			}
+				m_SidePathAreas.push_back(area);
 			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_BranchPath)
+				m_BranchPathAreas.push_back(area);
+			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SecondaryArea)
+				m_SecondaryPathAreas.push_back(area);
+		}
+	}
+	std::sort(m_MainPathAreas.begin(), m_MainPathAreas.end(), compareFunc);
+	std::sort(m_SidePathAreas.begin(), m_SidePathAreas.end(), compareFunc);
+	std::sort(m_BranchPathAreas.begin(), m_BranchPathAreas.end(), compareFunc);
+	std::sort(m_SecondaryPathAreas.begin(), m_SecondaryPathAreas.end(), compareFunc);
+	if (m_MainPathAreas.size() > 0)
+	{
+		int count = (int)sqrt(m_MainPathAreas.size()+2);
+		for (int i = 0; i < count; i++)
+		{
+			m_MainPathAreas[i]->setAreaType(EAreaTypeEnum::ATE_Pivotal);
+			m_PivotalAreas.push_back(m_MainPathAreas[i]);
+			m_nPivotalAreasCount++;
+		}
+	}
+	if (m_SidePathAreas.size() > 0)
+	{
+		int count = (int)sqrt(m_SidePathAreas.size()+2);
+		for (int i = 0; i < count; i++)
+		{
+			m_SidePathAreas[i]->setAreaType(EAreaTypeEnum::ATE_Pivotal);
+			m_PivotalAreas.push_back(m_SidePathAreas[i]);
+			m_nPivotalAreasCount++;
+		}
+	}
+	if (m_BranchPathAreas.size() > 0)
+	{
+		int count = (int)sqrt(m_BranchPathAreas.size()+2);
+		for (int i = 0; i < count; i++)
+		{
+			m_BranchPathAreas[i]->setAreaType(EAreaTypeEnum::ATE_Pivotal);
+			m_PivotalAreas.push_back(m_BranchPathAreas[i]);
+			m_nPivotalAreasCount++;
+		}
+	}
+	if (m_SecondaryPathAreas.size() > 0)
+	{
+		for (int i = 0; i < m_SecondaryPathAreas.size(); i++)
+		{
+			Area* area = m_SecondaryPathAreas[i];
+			if (area && area->getAreaType() == EAreaTypeEnum::ATE_Unknown && area->getConnectedAreas().size() == 1)
 			{
-				if (m_BranchPathAreas.empty())
-					m_BranchPathAreas.push_back(area);
-				else
+				if (area->getRect().GetSize().X >= m_nMinSpecialAreaSize && area->getRect().GetSize().Y >= m_nMinSpecialAreaSize && FMath::RandRange(0, m_nSpecialAreaCount*m_nSpecialAreaCount + 1) == 0)
 				{
-					for (iter = m_BranchPathAreas.begin(); iter != m_BranchPathAreas.end(); iter++)
-					{
-						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
+					area->setAreaType(EAreaTypeEnum::ATE_Special);
+					m_SpecialAreas.push_back(area);
+					m_nSpecialAreaCount++;
+				}
+				else if (FMath::RandRange(0,1) == 0)
+				{
+					std::vector<PathGraphNode*> neigbours;
+					for (PathGraphNode* n : area->getNeigbours()) {
+						Area* areaNeigbour = static_cast<Area*>(n);
+						if (areaNeigbour)
 						{
-							m_BranchPathAreas.insert(iter, area);
-							break;
+							if (areaNeigbour->getConnectedAreas().find(areaNeigbour) == areaNeigbour->getConnectedAreas().end() && areaNeigbour->getAreaType() == EAreaTypeEnum::ATE_Special)
+							{
+								neigbours.push_back(areaNeigbour);
+							}
 						}
 					}
-				}
-			}
-			else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SecondaryArea)
-			{
-				if (m_SecondaryPathAreas.empty())
-					m_SecondaryPathAreas.push_back(area);
-				else
-				{
-					for (iter = m_SecondaryPathAreas.begin(); iter != m_SecondaryPathAreas.end(); iter++)
-					{
-						if (area->getRect().GetArea() >= (*iter)->getRect().GetArea())
-						{
-							m_SecondaryPathAreas.insert(iter, area);
-							break;
-						}
+					if (neigbours.size() > 1) {
+						int rand = FMath::RandRange(0, (int)(neigbours.size()) - 1);
+						area->connectArea(static_cast<Area*>(neigbours[rand]));
 					}
 				}
 			}
 		}
 	}
-
+	if (!assignPivotalAreasType())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Assign pivotal areas type failed!"));
+		return false;
+	}
+	if (!assignSpecialAreasType())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Assign special areas type failed!"));
+		return false;
+	}
+	return true;
+}
+bool DungeonGenerator::assignPivotalAreasType()
+{
+	return true;
+}
+bool DungeonGenerator::assignSpecialAreasType()
+{
 	return true;
 }

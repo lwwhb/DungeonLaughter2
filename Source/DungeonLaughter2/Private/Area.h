@@ -18,7 +18,9 @@ enum class EAreaTypeEnum : uint8
 	ATE_Tunnel		UMETA(DisplayName = "Tunnel"),
 	ATE_Entrance	UMETA(DisplayName = "Entrance"),
 	ATE_Exit		UMETA(DisplayName = "Exit"),
-	ATE_Branch_Exit UMETA(DisplayName = "Branch_Exit")
+	ATE_Branch_Exit UMETA(DisplayName = "Branch_Exit"),
+	ATE_Pivotal		UMETA(DisplayName = "Pivotal"),
+	ATE_Special		UMETA(DisplayName = "Special")
 };
 UENUM(BlueprintType)
 enum class EAreaTypeMaskEnum : uint8

@@ -33,6 +33,8 @@ public:
 
 	std::vector<PathGraphNode*>& getAreas();
 	std::vector<Area*>& getConnectedAreas();
+	std::vector<Area*>& getPivotalAreas();
+	std::vector<Area*>& getSpecialAreas();
 
 	Area* getEntranceArea() const { return m_pAreaEntrance; }
 	Area* getExitArea() const { return m_pAreaExit; }
@@ -46,11 +48,16 @@ public:
 	int getSidePathAreasCount() const { return m_nSidePathAreasCount; }
 	int getBranchPathAreasCount() const { return m_nBranchPathAreasCount; }
 	int getSecondaryAreasCount() const { return m_nSecondaryAreasCount; }
+	int getPivotalAreasCount() const { return m_nPivotalAreasCount; }
+	int getSpecialAreaCount() const { return m_nSpecialAreaCount; }
 protected:
+	void reset();
 	virtual bool initAreas(const FBox2D& rect);
 	virtual void splitArea(const FBox2D& rect);
 	virtual bool connectArea();
 	virtual bool assignAreasType();
+	virtual bool assignPivotalAreasType();
+	virtual bool assignSpecialAreasType();
 private:
 	std::vector<PathGraphNode*>    m_Areas;
 	Area*				m_pAreaEntrance;
@@ -63,6 +70,14 @@ private:
 	float				m_fSecondaryAreaRatio;
 
 	std::vector<Area*> m_ConnectedAreas;
+
+	std::vector<Area*> m_MainPathAreas;
+	std::vector<Area*> m_SidePathAreas;
+	std::vector<Area*> m_BranchPathAreas;
+	std::vector<Area*> m_SecondaryPathAreas;
+
+	std::vector<Area*> m_PivotalAreas;
+	std::vector<Area*> m_SpecialAreas;
 
 	int		m_nWidth;			///地牢X方向大小
 	int		m_nHeight;			///地牢Y方向大小
@@ -79,5 +94,6 @@ private:
 	int		m_nBranchPathAreasCount;///分支路径区域数
 	int		m_nSecondaryAreasCount;	///次要区域数
 
+	int		m_nPivotalAreasCount;	///关键区域计数器
 	int		m_nSpecialAreaCount;	///特殊区域计数器
 };

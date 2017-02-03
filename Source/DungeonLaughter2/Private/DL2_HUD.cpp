@@ -11,7 +11,7 @@ void ADL2_HUD::BeginPlay()
 	Super::BeginPlay();
 
 #if WITH_EDITOR
-	enableStep1 = enableStep2 = enableStep3 = enableStep4 = enableStep5 = false;
+	enableStep1 = enableStep2 = enableStep3 = enableStep4 = enableStep5 = enableStep6 = false;
 	GetWorldTimerManager().SetTimer(m_TimerHandle, this, &ADL2_HUD::EnableStep1, 1.0f, false);
 	
 	
@@ -28,10 +28,10 @@ void ADL2_HUD::DrawHUD()
 		else
 			DrawBackground();
 	}
-	if (enableStep2)
-		DrawSplitLines();
 	if (enableStep3)
 		DrawEntranceAreaAndExitArea();
+	if (enableStep2)
+		DrawSplitLines();
 
 	DrawStatistics();
 #endif // WITH_EDITOR
@@ -61,6 +61,11 @@ void ADL2_HUD::EnableStep4()
 void ADL2_HUD::EnableStep5()
 {
 	enableStep5 = true;
+	GetWorldTimerManager().SetTimer(m_TimerHandle, this, &ADL2_HUD::EnableStep6, 1.0f, false);
+}
+void ADL2_HUD::EnableStep6()
+{
+	enableStep6 = true;
 }
 
 void ADL2_HUD::DrawBackground()
@@ -91,7 +96,7 @@ void ADL2_HUD::DrawConnectAreas()
 				if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_MainPath)
 					DrawRect(FLinearColor(FColor::Orange), rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
 				else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SidePath)
-					DrawRect(FLinearColor::Blue, rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
+					DrawRect(FLinearColor(FColor::Turquoise), rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
 				else if (area->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_BranchPath)
 					DrawRect(FLinearColor(FColor::Cyan), rect.Min.X*unit, rect.Min.Y*unit, rect.GetSize().X*unit, rect.GetSize().Y*unit);
 				else
@@ -134,6 +139,34 @@ void ADL2_HUD::DrawSplitLines()
 				DrawLine(rect.Min.X*unit, rect.Max.Y*unit, rect.Max.X*unit, rect.Max.Y*unit, FLinearColor::Green, 2.0f);
 				DrawLine(rect.Max.X*unit, rect.Max.Y*unit, rect.Max.X*unit, rect.Min.Y*unit, FLinearColor::Green, 2.0f);
 				DrawLine(rect.Max.X*unit, rect.Min.Y*unit, rect.Min.X*unit, rect.Min.Y*unit, FLinearColor::Green, 2.0f);
+			}
+		}
+	}
+	if (enableStep6)
+	{
+		std::vector<Area*>::iterator iter;
+		for (iter = DungeonGenerator::getInstance()->getPivotalAreas().begin(); iter != DungeonGenerator::getInstance()->getPivotalAreas().end(); iter++)
+		{
+			Area* area = static_cast<Area*>(*iter);
+			if (area)
+			{
+				FBox2D rect = area->getRect();
+				DrawLine(rect.Min.X*unit, rect.Min.Y*unit, rect.Min.X*unit, rect.Max.Y*unit, FLinearColor(FColor::Blue), 2.0f);
+				DrawLine(rect.Min.X*unit, rect.Max.Y*unit, rect.Max.X*unit, rect.Max.Y*unit, FLinearColor(FColor::Blue), 2.0f);
+				DrawLine(rect.Max.X*unit, rect.Max.Y*unit, rect.Max.X*unit, rect.Min.Y*unit, FLinearColor(FColor::Blue), 2.0f);
+				DrawLine(rect.Max.X*unit, rect.Min.Y*unit, rect.Min.X*unit, rect.Min.Y*unit, FLinearColor(FColor::Blue), 2.0f);
+			}
+		}
+		for (iter = DungeonGenerator::getInstance()->getSpecialAreas().begin(); iter != DungeonGenerator::getInstance()->getSpecialAreas().end(); iter++)
+		{
+			Area* area = static_cast<Area*>(*iter);
+			if (area)
+			{
+				FBox2D rect = area->getRect();
+				DrawLine(rect.Min.X*unit, rect.Min.Y*unit, rect.Min.X*unit, rect.Max.Y*unit, FLinearColor(FColor::Magenta), 2.0f);
+				DrawLine(rect.Min.X*unit, rect.Max.Y*unit, rect.Max.X*unit, rect.Max.Y*unit, FLinearColor(FColor::Magenta), 2.0f);
+				DrawLine(rect.Max.X*unit, rect.Max.Y*unit, rect.Max.X*unit, rect.Min.Y*unit, FLinearColor(FColor::Magenta), 2.0f);
+				DrawLine(rect.Max.X*unit, rect.Min.Y*unit, rect.Min.X*unit, rect.Min.Y*unit, FLinearColor(FColor::Magenta), 2.0f);
 			}
 		}
 	}
@@ -187,12 +220,18 @@ void ADL2_HUD::DrawStatistics()
 	DrawText(text, FLinearColor(FColor::Orange), (width + 2)*unit, unit * 7);
 
 	text = "Side Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSidePathAreasCount());
-	DrawText(text, FLinearColor(FColor::Blue), (width + 2)*unit, unit * 9);
+	DrawText(text, FLinearColor(FColor::Turquoise), (width + 2)*unit, unit * 9);
 
 	text = "Branch Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getBranchPathAreasCount());
 	DrawText(text, FLinearColor(FColor::Cyan), (width + 2)*unit, unit * 11);
 
 	text = "Secondary Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSecondaryAreasCount());
 	DrawText(text, FLinearColor::Black, (width + 2)*unit, unit * 13);
+
+	text = "Pivotal Area Count : " + FString::FromInt(DungeonGenerator::getInstance()->getPivotalAreasCount());
+	DrawText(text, FLinearColor(FColor::Blue), (width + 2)*unit, unit * 15);
+
+	text = "Special Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSpecialAreaCount());
+	DrawText(text, FLinearColor(FColor::Magenta), (width + 2)*unit, unit * 17);
 }
 #endif // WITH_EDITOR

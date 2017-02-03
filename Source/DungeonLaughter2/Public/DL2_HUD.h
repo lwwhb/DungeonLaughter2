@@ -26,6 +26,7 @@ private:
 	void EnableStep3();
 	void EnableStep4();
 	void EnableStep5();
+	void EnableStep6();
 
 	void DrawBackground();
 	void DrawConnectAreas();
@@ -39,6 +40,7 @@ private:
 	bool enableStep3;
 	bool enableStep4;
 	bool enableStep5;
+	bool enableStep6;
 #endif // WITH_EDITOR
 	
 };
