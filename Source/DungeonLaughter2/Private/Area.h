@@ -7,38 +7,16 @@
  */
 #include "PathGraphNode.h"
 #include "Door.h"
+#include "Cell.h"
 #include <unordered_map>
 
-UENUM(BlueprintType)
-enum class EAreaTypeEnum : uint8
-{
-	ATE_Unknown 	UMETA(DisplayName = "Unknown"),
-	ATE_Standard 	UMETA(DisplayName = "Standard"),
-	ATE_Passage		UMETA(DisplayName = "Passage"),
-	ATE_Tunnel		UMETA(DisplayName = "Tunnel"),
-	ATE_Entrance	UMETA(DisplayName = "Entrance"),
-	ATE_Exit		UMETA(DisplayName = "Exit"),
-	ATE_Branch_Exit UMETA(DisplayName = "Branch_Exit"),
-	ATE_Pivotal		UMETA(DisplayName = "Pivotal"),
-	ATE_Special		UMETA(DisplayName = "Special")
-};
-UENUM(BlueprintType)
-enum class EAreaTypeMaskEnum : uint8
-{
-	ATME_Unknown 			UMETA(DisplayName = "Unknown"),
-	ATME_Entrance			UMETA(DisplayName = "Entrance"),
-	ATME_Exit				UMETA(DisplayName = "Exit"),
-	ATME_Branch_Exit		UMETA(DisplayName = "Branch_Exit"),
-	ATME_MainPath 			UMETA(DisplayName = "MainPath"),
-	ATME_SidePath			UMETA(DisplayName = "SidePath"),
-	ATME_BranchPath			UMETA(DisplayName = "BranchPath"),
-	ATME_SecondaryArea		UMETA(DisplayName = "SecondaryArea")
-};
 class Area : public PathGraphNode
 {
 public:
 	Area();
-	virtual ~Area();
+	~Area();
+
+	bool generate();
 
 	void addNeigbourArea(Area* other);
 	void connectArea(Area* other);
@@ -55,6 +33,12 @@ public:
 	FBox2D getIntersectRect(Area* other);
 
 	std::unordered_map<Area*, Door*>& getConnectedAreas() { return m_ConnectedAreas; }
+private:
+	bool generateStandardArea();
+
+	void generateCells(ECellTypeEnum cellType);
+	void generateCells(int m, ECellTypeEnum cellType);
+	void generateCells(const FBox2D& rect, ECellTypeEnum cellType);
 private:
 	FBox2D       m_Rect;
 

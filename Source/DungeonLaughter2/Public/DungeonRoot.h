@@ -36,6 +36,8 @@ public:
 	bool UseBranchExit;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate looped branch path."))
 	bool UseLoopBranchPath;
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate multilayer branch path."))
+	bool MultiLayerBranchPath;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether the dungeon is impasse."))
 	bool IsImpasse;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))

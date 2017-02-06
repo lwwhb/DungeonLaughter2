@@ -2,7 +2,6 @@
 
 #include "DungeonLaughter2.h"
 #include "DungeonGenerator.h"
-#include "Area.h"
 #include <algorithm>
 
 DungeonGenerator* g_pDungeonGeneratorInstance = nullptr;
@@ -21,8 +20,8 @@ DungeonGenerator::DungeonGenerator()
 DungeonGenerator::~DungeonGenerator()
 {
 }
-bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
-	bool doublePath, bool branchPath, bool loopBranchPath, bool isImpasse, float secondaryAreaRatio)
+bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
+	bool doublePath, bool branchPath, bool loopBranchPath, bool multiLayerBranchPath, bool isImpasse, float secondaryAreaRatio, EDungeonStyle dungeonStyle)
 {
 	reset();
 	if (width > 96 || width < 32)
@@ -65,6 +64,11 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAr
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it doesn't generate branch path, you can't loop the branch path.")));
 		return false;
 	}
+	if (multiLayerBranchPath && !branchPath)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it doesn't generate branch path, you can't generate multiLayer branch path.")));
+		return false;
+	}
 	if (isImpasse && branchPath)
 	{
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it's impasse dungeon, it can't generate branch path.")));
@@ -77,15 +81,18 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int minSplitAr
 	}
 	m_nWidth = width;
 	m_nHeight = height;
+	m_nCellUnit = cellUnit;
 	m_nMinSplitAreaSize = minSplitAreaSize;
 	m_nMaxSplitAreaSize = maxSplitAreaSize;
-	m_nMinAreaSize = minAreaSize; ///最小区域大小
+	m_nMinAreaSize = minAreaSize;				///最小区域大小
 	m_nMinSpecialAreaSize = minSpecialAreaSize; ///最小特殊区域大小
 	m_bDoublePath = doublePath;
 	m_bBranchPath = branchPath;
 	m_bLoopBranchPath = loopBranchPath;
+	m_bMultiLayerBranchPath = multiLayerBranchPath;
 	m_bIsImpasse = isImpasse;
 	m_fSecondaryAreaRatio = secondaryAreaRatio;
+	m_DungeonStyle = dungeonStyle;
 	return true;
 }
 bool DungeonGenerator::generateDungeon()
@@ -105,9 +112,28 @@ bool DungeonGenerator::generateDungeon()
 		UE_LOG(LogTemp, Fatal, TEXT("Assign areas type failed!"));
 		return false;
 	}
+	if (!generateAreas())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Generate areas failed!"));
+		return false;
+	}
 	return true;
 }
-
+void DungeonGenerator::generateCells(int x, int y, int width, int height, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct)
+{
+	int pos = y * m_nWidth + x;
+	for (int i = y; i < y + height; i++, pos += m_nWidth) {
+		for (int j = pos, k = x; j<(pos + width); j++, k++) {
+			m_Map[j].setIndexX(k);
+			m_Map[j].setIndexY(i);
+			m_Map[j].setCellType(cellType);
+			m_Map[j].setAreaType(areaType);
+			m_Map[j].setAreaTypeMask(areaTypeMask);
+			//m_Map[j].m_Flag = assignTerrainTileFlag(tileType);
+			m_Map[j].setDirect(direct);
+		}
+	}
+}
 std::vector<PathGraphNode*>& DungeonGenerator::getAreas()
 {
 	return m_Areas;
@@ -128,7 +154,7 @@ void DungeonGenerator::reset()
 {
 	m_pAreaEntrance = nullptr;
 	m_pAreaExit = nullptr;
-	m_pAreaBranchExit = nullptr;
+	m_pAreaBranch = nullptr;
 
 	if (!m_MainPathAreas.empty())
 		m_MainPathAreas.clear();
@@ -144,6 +170,19 @@ void DungeonGenerator::reset()
 		m_SpecialAreas.clear();
 	if (!m_ConnectedAreas.empty())
 		m_ConnectedAreas.clear();
+	if (!m_Doors.empty())
+	{
+		std::vector<Door*>::iterator iter;
+		for (iter = m_Doors.begin(); iter != m_Doors.end(); iter++)
+		{
+			if (*iter)
+			{
+				delete *iter;
+				*iter = nullptr;
+			}
+		}
+		m_Doors.clear();
+	}
 	if (!m_Areas.empty())
 	{
 		std::vector<PathGraphNode*>::iterator iter;
@@ -157,20 +196,24 @@ void DungeonGenerator::reset()
 		}
 		m_Areas.clear();
 	}
-
+	m_Map.clear();
 	m_bDoublePath = false;
 	m_bBranchPath = false;
 	m_bLoopBranchPath = false;
+	m_bMultiLayerBranchPath = false;
 	m_bIsImpasse = false;
 	m_fSecondaryAreaRatio = 0.0f;
 
 	m_nWidth = 0;
 	m_nHeight = 0;
+	m_nCellUnit = 10;
 
 	m_nMinSplitAreaSize = 0;
 	m_nMaxSplitAreaSize = 0;
 	m_nMinAreaSize = 0;
 	m_nMinSpecialAreaSize = 0;
+
+	m_DungeonStyle = EDungeonStyle::DSE_Standard;
 
 	m_nMainPathAreasCount = 0;
 	m_nSidePathAreasCount = 0;
@@ -178,6 +221,9 @@ void DungeonGenerator::reset()
 	m_nSecondaryAreasCount = 0;
 	m_nPivotalAreasCount = 0;
 	m_nSpecialAreaCount = 0;
+	m_nStandardAreaCount = 0;
+	m_nPassageAreaCount = 0;
+	m_nTunnelAreaCount = 0;
 }
 bool DungeonGenerator::initAreas(const FBox2D& rect)
 {	
@@ -273,10 +319,10 @@ bool DungeonGenerator::connectArea()
 			do
 			{
 				int rand = FMath::RandRange(0, (int)(m_Areas.size()) - 1);
-				m_pAreaBranchExit = static_cast<Area*>(m_Areas[rand]);
-			} while (m_pAreaBranchExit->getRect().GetSize().X < 4 || m_pAreaBranchExit->getRect().GetSize().Y < 4);
+				m_pAreaBranch = static_cast<Area*>(m_Areas[rand]);
+			} while (m_pAreaBranch->getRect().GetSize().X < 4 || m_pAreaBranch->getRect().GetSize().Y < 4);
 
-			PathGraph::buildDistanceMap(m_Areas, m_pAreaBranchExit);
+			PathGraph::buildDistanceMap(m_Areas, m_pAreaBranch);
 
 			distance1 = m_pAreaEntrance->getDistance();
 			distance2 = m_pAreaExit->getDistance();
@@ -296,10 +342,13 @@ bool DungeonGenerator::connectArea()
 		m_pAreaExit->setAreaType(EAreaTypeEnum::ATE_Exit);
 		m_pAreaExit->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Exit);
 	}
-	if (m_pAreaBranchExit)
+	if (m_pAreaBranch)
 	{
-		m_pAreaBranchExit->setAreaType(EAreaTypeEnum::ATE_Branch_Exit);
-		m_pAreaBranchExit->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Branch_Exit);
+		m_pAreaBranch->setAreaType(EAreaTypeEnum::ATE_Branch);
+		if(m_bMultiLayerBranchPath)
+			m_pAreaBranch->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Branch_Exit);
+		else
+			m_pAreaBranch->setAreaTypeMask(EAreaTypeMaskEnum::ATME_Branch_Mission);
 	}
 
 	///生成第一条路径
@@ -350,9 +399,9 @@ bool DungeonGenerator::connectArea()
 	if (m_bBranchPath)
 	{
 		///生成第一条分支路径
-		PathGraph::buildDistanceMap(m_Areas, m_pAreaBranchExit);
+		PathGraph::buildDistanceMap(m_Areas, m_pAreaBranch);
 
-		std::vector<PathGraphNode*> branchPath = PathGraph::buildPath(m_Areas, m_pAreaEntrance, m_pAreaBranchExit);
+		std::vector<PathGraphNode*> branchPath = PathGraph::buildPath(m_Areas, m_pAreaEntrance, m_pAreaBranch);
 		Area* startArea1 = m_pAreaEntrance;
 		for (PathGraphNode* node : branchPath) {
 			Area* next = static_cast<Area*>(node);
@@ -368,14 +417,14 @@ bool DungeonGenerator::connectArea()
 				m_ConnectedAreas.push_back(startArea1);
 			}
 		}
-		PathGraph::setWeight(branchPath, m_pAreaBranchExit->getDistance());
+		PathGraph::setWeight(branchPath, m_pAreaBranch->getDistance());
 		///生成回路分支路径
 		if (m_bLoopBranchPath)
 		{
 			PathGraph::buildDistanceMap(m_Areas, m_pAreaExit);
-			branchPath = PathGraph::buildPath(m_Areas, m_pAreaBranchExit, m_pAreaExit);
+			branchPath = PathGraph::buildPath(m_Areas, m_pAreaBranch, m_pAreaExit);
 
-			startArea1 = m_pAreaBranchExit;
+			startArea1 = m_pAreaBranch;
 			for (PathGraphNode* node : branchPath) {
 				Area* next = static_cast<Area*>(node);
 				if (next)
@@ -430,7 +479,6 @@ bool compareFunc(Area*& first, Area*& second)
 bool DungeonGenerator::assignAreasType()
 {
 	///分离数组排序
-	std::vector<Area*>::iterator iter;
 	for (Area* area : m_ConnectedAreas) {
 		if (area)
 		{
@@ -522,6 +570,11 @@ bool DungeonGenerator::assignAreasType()
 		UE_LOG(LogTemp, Fatal, TEXT("Assign special areas type failed!"));
 		return false;
 	}
+	if (!assignStandardAreasType())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Assign standard areas type failed!"));
+		return false;
+	}
 	return true;
 }
 bool DungeonGenerator::assignPivotalAreasType()
@@ -530,5 +583,147 @@ bool DungeonGenerator::assignPivotalAreasType()
 }
 bool DungeonGenerator::assignSpecialAreasType()
 {
+	return true;
+}
+bool DungeonGenerator::assignStandardAreasType()
+{
+	for (Area* area : m_ConnectedAreas)
+	{
+		if (!area)
+			return false;
+		if (area->getAreaType() == EAreaTypeEnum::ATE_Unknown)
+		{
+			int connections = (int)area->getConnectedAreas().size();
+			if (connections == 0)
+			{
+				UE_LOG(LogTemp, Fatal, TEXT("Connected areas count is zero!"));
+				return false;
+			}
+			else if (FMath::RandRange(0, connections * connections - 1) == 0)
+			{
+				area->setAreaType(EAreaTypeEnum::ATE_Standard);
+				m_nStandardAreaCount++;
+			}
+			else
+			{
+				switch (m_DungeonStyle)
+				{
+				case EDungeonStyle::DSE_Standard:
+					area->setAreaType(EAreaTypeEnum::ATE_Standard);
+					m_nStandardAreaCount++;
+					break;
+				case EDungeonStyle::DSE_Passage:
+					area->setAreaType(EAreaTypeEnum::ATE_Passage);
+					m_nPassageAreaCount++;
+					break;
+				case EDungeonStyle::DSE_Tunnel:
+					area->setAreaType(EAreaTypeEnum::ATE_Tunnel);
+					m_nTunnelAreaCount++;
+					break;
+				default:
+					break;
+				}
+			}
+		}
+	}
+
+	///保证标准区域至少4个
+	int retry = 0;
+	while (m_nStandardAreaCount < 4) {
+		int rand = FMath::RandRange(0, (int)(m_Areas.size()) - 1);
+		Area* area = static_cast<Area*>(m_ConnectedAreas[rand]);
+		if (area != nullptr) {
+			if (area->getAreaType() == EAreaTypeEnum::ATE_Passage)
+			{
+				area->setAreaType(EAreaTypeEnum::ATE_Standard);
+				m_nTunnelAreaCount--;
+				m_nStandardAreaCount++;
+			}
+			else if (area->getAreaType() == EAreaTypeEnum::ATE_Tunnel)
+			{
+				area->setAreaType(EAreaTypeEnum::ATE_Standard);
+				m_nPassageAreaCount--;
+				m_nStandardAreaCount++;
+			}
+			else
+			{
+				if (retry++ > 60) {
+					break;
+				}
+			}
+		}
+	}
+	return true;
+}
+
+bool DungeonGenerator::generateAreas()
+{
+	for (Area* area : m_ConnectedAreas)
+	{
+		if (!area)
+			return false;
+		if (area->getAreaType() != EAreaTypeEnum::ATE_Unknown)
+		{
+			if (!placeDoors(area))
+				return false;
+			if (!area->generate())
+				return false;
+		}
+	}
+	for (Area* area : m_ConnectedAreas) {
+		if (!area)
+			return false;
+		if (!generateDoors(area))
+		{
+			UE_LOG(LogTemp, Fatal, TEXT("Generate doors failed!"));
+			return false;
+		}
+		if (!generateTraps(area))
+		{
+			UE_LOG(LogTemp, Fatal, TEXT("Generate traps failed!"));
+			return false;
+		}
+	}
+	
+	return true;
+}
+bool DungeonGenerator::placeDoors(Area* area)
+{
+	if (!area)
+		return false;
+	for (auto iter = area->getConnectedAreas().begin(); iter != area->getConnectedAreas().end(); iter++) {
+		Area* areaOri = iter->first;
+		Door* door = iter->second;
+		if (areaOri)
+		{
+			if (door == nullptr)
+			{
+				door = new(std::nothrow) Door();
+				if (!door)
+					return false;
+				m_Doors.push_back(door);
+				
+				FBox2D rect = area->getIntersectRect(areaOri);
+				if (rect.GetSize().X == 0)
+					door->setPos(FVector2D(rect.Min.X, FMath::RandRange((int)rect.Min.Y + 1, (int)rect.Max.Y - 1)));
+				else
+					door->setPos(FVector2D(FMath::RandRange((int)rect.Min.X + 1, (int)rect.Max.X - 1), rect.Min.Y));
+				area->getConnectedAreas()[areaOri] = door;
+				areaOri->getConnectedAreas()[area] = door;
+			}
+		}
+	}
+	return true;
+}
+bool DungeonGenerator::generateDoors(Area* area)
+{
+	if (!area)
+		return false;
+	return true;
+}
+bool DungeonGenerator::generateTraps(Area* area)
+{
+	if (!area)
+		return false;
 	return true;
 }

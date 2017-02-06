@@ -19,7 +19,6 @@ class DUNGEONLAUGHTER2_API ADL2_HUD : public AHUD
 	virtual void DrawHUD() override;
 
 #if WITH_EDITOR
-	static const int unit = 10;
 private:
 	void EnableStep1();
 	void EnableStep2();
@@ -41,6 +40,8 @@ private:
 	bool enableStep4;
 	bool enableStep5;
 	bool enableStep6;
+
+	int unit;
 #endif // WITH_EDITOR
 	
 };
