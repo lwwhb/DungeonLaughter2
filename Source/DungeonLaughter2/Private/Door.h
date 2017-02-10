@@ -9,8 +9,15 @@
 UENUM(BlueprintType)
 enum class EDoorTypeEnum : uint8
 {
-	DTE_Empty 		UMETA(DisplayName = "Empty"),
-	DTE_Standard 	UMETA(DisplayName = "Standard")
+	DTE_Empty 				UMETA(DisplayName = "Empty"),
+	DTE_Standard 			UMETA(DisplayName = "Standard"),
+	DTE_Passage				UMETA(DisplayName = "Passage"),
+	DTE_Tunnel				UMETA(DisplayName = "Tunnel"),
+	DTE_Locked				UMETA(DisplayName = "Locked"),
+	DTE_Hidden				UMETA(DisplayName = "Hidden"),
+	DTE_MissionLocked		UMETA(DisplayName = "MissionLocked"),
+	DTE_Barricade			UMETA(DisplayName = "Barricade"),
+	DTE_BossTreasury		UMETA(DisplayName = "BossTreasury")
 };
 
 class Door

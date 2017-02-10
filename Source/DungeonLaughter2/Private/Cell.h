@@ -9,9 +9,22 @@
 UENUM(BlueprintType)
 enum class ECellTypeEnum : uint8
 {
-	CTE_Empty 		UMETA(DisplayName = "Empty"),
-	CTE_Floor 		UMETA(DisplayName = "Floor"),
-	CTE_Wall		UMETA(DisplayName = "Wall")
+	CTE_Empty 				UMETA(DisplayName = "Empty"),
+	CTE_StandardFloor 		UMETA(DisplayName = "StandardFloor"),
+	CTE_PassageFloor		UMETA(DisplayName = "PassageFloor"),
+	CTE_TunnelFloor			UMETA(DisplayName = "TunnelFloor"),
+	CTE_Wall				UMETA(DisplayName = "Wall"),
+	CTE_PassageWall			UMETA(DisplayName = "PassageWall"),
+	CTE_Entrance			UMETA(DisplayName = "Entrance"),
+	CTE_Exit				UMETA(DisplayName = "Exit"),
+	CTE_BranchExit			UMETA(DisplayName = "BranchExit"),
+
+	CTE_StandardDoor		UMETA(DisplayName = "StandardDoor"),
+	CTE_LockedDoor			UMETA(DisplayName = "LockedDoor"),
+	CTE_HiddenDoor			UMETA(DisplayName = "HiddenDoor"),
+	CTE_MissionLockedDoor	UMETA(DisplayName = "MissionLockedDoor"),
+	CTE_Barricade			UMETA(DisplayName = "Barricade"),
+	CTE_BossTreasuryDoor	UMETA(DisplayName = "BossTreasuryDoor")
 };
 
 
@@ -26,7 +39,8 @@ enum class EAreaTypeEnum : uint8
 	ATE_Exit		UMETA(DisplayName = "Exit"),
 	ATE_Branch		UMETA(DisplayName = "Branch"),
 	ATE_Pivotal		UMETA(DisplayName = "Pivotal"),
-	ATE_Special		UMETA(DisplayName = "Special")
+	ATE_Special		UMETA(DisplayName = "Special"),
+	ATE_Unusual		UMETA(DisplayName = "Unusual")
 };
 UENUM(BlueprintType)
 enum class EAreaTypeMaskEnum : uint8
@@ -77,6 +91,7 @@ public:
 private:
 	int						m_nIndexX;
 	int						m_nIndexY;
+	int						m_nDepthZ;
 	ECellTypeEnum			m_Type;
 	EAreaTypeEnum			m_AreaType;
 	EAreaTypeMaskEnum		m_AreaTypeMask;

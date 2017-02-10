@@ -26,11 +26,13 @@ private:
 	void EnableStep4();
 	void EnableStep5();
 	void EnableStep6();
+	void EnableStep7();
 
 	void DrawBackground();
 	void DrawConnectAreas();
 	void DrawSplitLines();
 	void DrawEntranceAreaAndExitArea();
+	void DrawFinalMap();
 	void DrawStatistics();
 private:
 	FTimerHandle  m_TimerHandle;
@@ -40,6 +42,7 @@ private:
 	bool enableStep4;
 	bool enableStep5;
 	bool enableStep6;
+	bool enableStep7;
 
 	int unit;
 #endif // WITH_EDITOR

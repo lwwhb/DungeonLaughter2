@@ -31,11 +31,24 @@ public:
 		EDungeonStyle dungeonStyle = EDungeonStyle::DSE_Standard);
 	bool generateDungeon();
 	void generateCells(int x, int y, int width, int height, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
+	void setCellType(int posX, int posY, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
+	void setCellAreaType(int x, int y, int width, int height, EAreaTypeEnum areaType);
+	void wrapCellByCellType(int x, int y, int width, int height, ECellTypeEnum cellType, ECellTypeEnum withCellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 
+	std::vector<int> getNeighbours4() { return{ -m_nWidth, +1, +m_nWidth, -1 }; }
+	std::vector<int> getNeighbours5() { return{ 0, -m_nWidth, +1, +m_nWidth, -1 }; }
+	std::vector<int> getNeighbours8() { return{ +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth }; }
+	std::vector<int> getNeighbours9() { return{ 0, +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth }; }
+	std::vector<int> getNeighbours13() { return{ 0, +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth, +2, -2, +m_nWidth * 2, -m_nWidth * 2 }; }
+	std::vector<int> getNeighbours21() { return{ 0, +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth, +2, -2, +m_nWidth * 2, -m_nWidth * 2, +1 + m_nWidth * 2,-1 + m_nWidth * 2, +1 - m_nWidth * 2,-1 - m_nWidth * 2, -2 + m_nWidth, +2 + m_nWidth, +2 - m_nWidth, -2 - m_nWidth }; }
+	std::vector<int> getNeighbours25() { return{ 0, +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth, +2, -2, +m_nWidth * 2, -m_nWidth * 2, +1 + m_nWidth * 2,-1 + m_nWidth * 2, +1 - m_nWidth * 2,-1 - m_nWidth * 2, -2 + m_nWidth, +2 + m_nWidth, +2 - m_nWidth, -2 - m_nWidth, +2 + m_nWidth * 2, +2 - m_nWidth * 2, -2 + m_nWidth * 2, -2 - m_nWidth * 2 }; }
+
+	std::vector<Cell>& getMap();
 	std::vector<PathGraphNode*>& getAreas();
 	std::vector<Area*>& getConnectedAreas();
 	std::vector<Area*>& getPivotalAreas();
 	std::vector<Area*>& getSpecialAreas();
+	std::vector<std::vector<Area*>>& getUnusualAreas();
 
 	Area* getEntranceArea() const { return m_pAreaEntrance; }
 	Area* getExitArea() const { return m_pAreaExit; }
@@ -54,22 +67,31 @@ public:
 	int getSecondaryAreasCount() const { return m_nSecondaryAreasCount; }
 	int getPivotalAreasCount() const { return m_nPivotalAreasCount; }
 	int getSpecialAreaCount() const { return m_nSpecialAreaCount; }
+	int getUnusualAreaCount() const { return m_nUnusualAreaCount; }
 	int getStandardAreaCount() const { return m_nStandardAreaCount; }
 	int getPassageAreaCount() const { return m_nPassageAreaCount; }
 	int getTunnelAreaCount() const { return m_nTunnelAreaCount; }
-protected:
+
+	int getStandardDoorCount() const { return m_nStandardDoorCount; }
+	int getLockedDoorCount() const { return m_nLockedDoorCount; }
+	int getHiddenDoorCount() const { return m_nHiddenDoorCount; }
+	int getSpecialDoorCount() const { return m_nSpecialDoorCount; }
+private:
 	void reset();
-	virtual bool initAreas(const FBox2D& rect);
-	virtual void splitArea(const FBox2D& rect);
-	virtual bool connectArea();
-	virtual bool assignAreasType();
-	virtual bool assignPivotalAreasType();
-	virtual bool assignSpecialAreasType();
-	virtual bool assignStandardAreasType();
-	virtual bool generateAreas();
-	virtual bool placeDoors(Area* area);
-	virtual bool generateDoors(Area* area);
-	virtual bool generateTraps(Area* area);
+	bool initAreas(const FBox2D& rect);
+	void splitArea(const FBox2D& rect);
+	bool connectArea();
+	bool mergeSmallIntersectArea(Area* area, Area* other, bool generate = true);
+	void addUnusualAreas(Area* area, Area* otherArea);
+	bool assignAreasType();
+	bool assignPivotalAreasType();
+	bool assignSpecialAreasType();
+	bool assignStandardAreasType();
+	bool generateAreas();
+	bool placeDoors(Area* area);
+	bool generateDoors(Area* area);
+	void generateUnusualAreas();
+	bool generateTraps(Area* area);
 private:
 	std::vector<Cell>	m_Map;
 	std::vector<PathGraphNode*>    m_Areas;
@@ -92,6 +114,7 @@ private:
 
 	std::vector<Area*> m_PivotalAreas;
 	std::vector<Area*> m_SpecialAreas;
+	std::vector<std::vector<Area*>> m_UnusualAreas;
 
 	std::vector<Door*> m_Doors;
 
@@ -114,7 +137,13 @@ private:
 
 	int		m_nPivotalAreasCount;	///关键区域计数器
 	int		m_nSpecialAreaCount;	///特殊区域计数器
+	int		m_nUnusualAreaCount;	///独特区域计数器
 	int		m_nStandardAreaCount;	///标准区域计数器
 	int		m_nPassageAreaCount;	///通道区域计数器
 	int		m_nTunnelAreaCount;		///隧道区域计数器
+
+	int		m_nStandardDoorCount;	///标准门计数器
+	int		m_nLockedDoorCount;		///锁住的门计数器
+	int		m_nHiddenDoorCount;		///隐藏门计数器
+	int		m_nSpecialDoorCount;	///特殊门计数器（包括任务门，路障和宝藏室）
 };

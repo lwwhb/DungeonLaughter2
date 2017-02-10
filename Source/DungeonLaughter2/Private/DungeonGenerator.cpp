@@ -2,6 +2,7 @@
 
 #include "DungeonLaughter2.h"
 #include "DungeonGenerator.h"
+#include "AlisaMethod.h"
 #include <algorithm>
 
 DungeonGenerator* g_pDungeonGeneratorInstance = nullptr;
@@ -79,8 +80,8 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("SecondaryAreaRatio value must between 0.0f~0.5f")));
 		return false;
 	}
-	m_nWidth = width;
-	m_nHeight = height;
+	m_nWidth = width + 1;
+	m_nHeight = height + 1;
 	m_nCellUnit = cellUnit;
 	m_nMinSplitAreaSize = minSplitAreaSize;
 	m_nMaxSplitAreaSize = maxSplitAreaSize;
@@ -93,11 +94,27 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 	m_bIsImpasse = isImpasse;
 	m_fSecondaryAreaRatio = secondaryAreaRatio;
 	m_DungeonStyle = dungeonStyle;
+
+	m_Map.resize(m_nWidth*m_nHeight);
+	for (int i = 0; i < m_nHeight; i++)
+	{
+		for (int j = 0; j < m_nWidth; j++)
+		{
+			int index = i*m_nHeight + j;
+			m_Map[index].setIndexX(j);
+			m_Map[index].setIndexY(i);
+		}
+	}
 	return true;
 }
 bool DungeonGenerator::generateDungeon()
 {
-	if (!initAreas(FBox2D(FVector2D(0, 0), FVector2D(m_nWidth, m_nHeight))))
+	if (m_Map.empty())
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("Please call setGeneratorSetting function first!")));
+		return false;
+	}
+	if (!initAreas(FBox2D(FVector2D(0, 0), FVector2D(m_nWidth-1, m_nHeight-1))))
 	{
 		UE_LOG(LogTemp, Fatal, TEXT("Init areas failed!"));
 		return false;
@@ -124,15 +141,57 @@ void DungeonGenerator::generateCells(int x, int y, int width, int height, ECellT
 	int pos = y * m_nWidth + x;
 	for (int i = y; i < y + height; i++, pos += m_nWidth) {
 		for (int j = pos, k = x; j<(pos + width); j++, k++) {
-			m_Map[j].setIndexX(k);
-			m_Map[j].setIndexY(i);
 			m_Map[j].setCellType(cellType);
 			m_Map[j].setAreaType(areaType);
 			m_Map[j].setAreaTypeMask(areaTypeMask);
-			//m_Map[j].m_Flag = assignTerrainTileFlag(tileType);
+			//m_Map[j].m_Flag = assignTerrainTileFlag(cellType);
 			m_Map[j].setDirect(direct);
 		}
 	}
+}
+void DungeonGenerator::setCellType(int posX, int posY, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct)
+{
+	int index = posX + posY * m_nWidth;
+	m_Map[index].setCellType(cellType);
+	m_Map[index].setAreaType(areaType);
+	m_Map[index].setAreaTypeMask(areaTypeMask);
+	//m_Map[index].m_Flag = assignTerrainTileFlag(cellType);
+	m_Map[index].setDirect(direct);
+}
+void DungeonGenerator::setCellAreaType(int x, int y, int width, int height, EAreaTypeEnum areaType)
+{
+	int pos = x + y * m_nWidth;
+	for (int i = y; i < y + height; i++, pos += m_nWidth) {
+		for (int j = pos; j < (pos + width); j++) {
+			m_Map[j].setAreaType(areaType);
+		}
+	}
+}
+void DungeonGenerator::wrapCellByCellType(int x, int y, int width, int height, ECellTypeEnum cellType, ECellTypeEnum withCellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct)
+{
+	int pos = y * m_nWidth + x;
+	for (int i = y; i < y + height; i++, pos += m_nWidth) {
+		for (int j = pos; j<(pos + width); j++) {
+			if (m_Map[j].getCellType() == cellType)
+			{
+				for (int n : getNeighbours8()) {
+					int cell = j + n;
+					if (m_Map[cell].getCellType() == ECellTypeEnum::CTE_Empty)
+					{
+						m_Map[cell].setCellType(withCellType);
+						m_Map[cell].setAreaType(areaType);
+						m_Map[cell].setAreaTypeMask(areaTypeMask);
+						//m_Map[cell].m_Flag = assignTerrainTileFlag(withCellType);
+						m_Map[cell].setDirect(direct);
+					}
+				}
+			}
+		}
+	}
+}
+std::vector<Cell>& DungeonGenerator::getMap()
+{
+	return m_Map;
 }
 std::vector<PathGraphNode*>& DungeonGenerator::getAreas()
 {
@@ -149,6 +208,10 @@ std::vector<Area*>& DungeonGenerator::getPivotalAreas()
 std::vector<Area*>& DungeonGenerator::getSpecialAreas()
 {
 	return m_SpecialAreas;
+}
+std::vector<std::vector<Area*>>& DungeonGenerator::getUnusualAreas()
+{
+	return m_UnusualAreas;
 }
 void DungeonGenerator::reset()
 {
@@ -168,6 +231,15 @@ void DungeonGenerator::reset()
 		m_PivotalAreas.clear();
 	if (!m_SpecialAreas.empty())
 		m_SpecialAreas.clear();
+	if (!m_UnusualAreas.empty())
+	{
+		for (size_t i = 0; i < m_UnusualAreas.size(); i++)
+		{
+			if (!m_UnusualAreas[i].empty())
+				m_UnusualAreas[i].clear();
+		}
+		m_UnusualAreas.clear();
+	}
 	if (!m_ConnectedAreas.empty())
 		m_ConnectedAreas.clear();
 	if (!m_Doors.empty())
@@ -221,9 +293,15 @@ void DungeonGenerator::reset()
 	m_nSecondaryAreasCount = 0;
 	m_nPivotalAreasCount = 0;
 	m_nSpecialAreaCount = 0;
+	m_nUnusualAreaCount = 0;
 	m_nStandardAreaCount = 0;
 	m_nPassageAreaCount = 0;
 	m_nTunnelAreaCount = 0;
+
+	m_nStandardDoorCount	= 0;	///标准门计数器
+	m_nLockedDoorCount		= 0;	///锁住的门计数器
+	m_nHiddenDoorCount		= 0;	///隐藏门计数器
+	m_nSpecialDoorCount		= 0;	///特殊门计数器（包括任务门，路障和宝藏室）
 }
 bool DungeonGenerator::initAreas(const FBox2D& rect)
 {	
@@ -352,7 +430,8 @@ bool DungeonGenerator::connectArea()
 	}
 
 	///生成第一条路径
-	m_ConnectedAreas.push_back(m_pAreaEntrance);
+	if(m_ConnectedAreas.empty())
+		m_ConnectedAreas.push_back(m_pAreaEntrance);
 	PathGraph::buildDistanceMap(m_Areas, m_pAreaExit);
 
 	std::vector<PathGraphNode*> path = PathGraph::buildPath(m_Areas, m_pAreaEntrance, m_pAreaExit);
@@ -361,14 +440,16 @@ bool DungeonGenerator::connectArea()
 		Area* next = static_cast<Area*>(node);
 		if (next)
 		{
-			startArea->connectArea(next);
-			startArea = next;
-			if (startArea->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
-			{
-				startArea->setAreaTypeMask(EAreaTypeMaskEnum::ATME_MainPath);
-				m_nMainPathAreasCount++;
+			if (std::find(m_ConnectedAreas.begin(), m_ConnectedAreas.end(), next) == m_ConnectedAreas.end()) {
+				startArea->connectArea(next);
+				startArea = next;
+				if (startArea->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
+				{
+					startArea->setAreaTypeMask(EAreaTypeMaskEnum::ATME_MainPath);
+					m_nMainPathAreasCount++;
+				}
+				m_ConnectedAreas.push_back(startArea);
 			}
-			m_ConnectedAreas.push_back(startArea);
 		}
 	}
 	PathGraph::setWeight(path, m_pAreaEntrance->getDistance());
@@ -384,14 +465,27 @@ bool DungeonGenerator::connectArea()
 			Area* next = static_cast<Area*>(node);
 			if (next)
 			{
-				startArea->connectArea(next);
-				startArea = next;
-				if (startArea->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
-				{
-					startArea->setAreaTypeMask(EAreaTypeMaskEnum::ATME_SidePath);
-					m_nSidePathAreasCount++;
+				if (std::find(m_ConnectedAreas.begin(), m_ConnectedAreas.end(), next) == m_ConnectedAreas.end()) {
+					startArea->connectArea(next);
+					startArea = next;
+					if (startArea->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
+					{
+						startArea->setAreaTypeMask(EAreaTypeMaskEnum::ATME_SidePath);
+						m_nSidePathAreasCount++;
+					}
+					m_ConnectedAreas.push_back(startArea);
 				}
-				m_ConnectedAreas.push_back(startArea);
+			}
+		}
+
+		Area* last = m_ConnectedAreas[m_ConnectedAreas.size() - 1];
+		if (last)
+		{
+			for (size_t i = 0; i < last->getNeigbours().size(); i++)
+			{
+				Area* cn = static_cast<Area*>(last->getNeigbours()[i]);
+				if (cn && (cn->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_MainPath || cn == m_pAreaExit))
+					last->connectArea(cn);
 			}
 		}
 	}
@@ -407,14 +501,16 @@ bool DungeonGenerator::connectArea()
 			Area* next = static_cast<Area*>(node);
 			if (next)
 			{
-				startArea1->connectArea(next);
-				startArea1 = next;
-				if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
-				{
-					startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
-					m_nBranchPathAreasCount++;
+				if (std::find(m_ConnectedAreas.begin(), m_ConnectedAreas.end(), next) == m_ConnectedAreas.end()) {
+					startArea1->connectArea(next);
+					startArea1 = next;
+					if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
+					{
+						startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
+						m_nBranchPathAreasCount++;
+					}
+					m_ConnectedAreas.push_back(startArea1);
 				}
-				m_ConnectedAreas.push_back(startArea1);
 			}
 		}
 		PathGraph::setWeight(branchPath, m_pAreaBranch->getDistance());
@@ -429,14 +525,26 @@ bool DungeonGenerator::connectArea()
 				Area* next = static_cast<Area*>(node);
 				if (next)
 				{
-					startArea1->connectArea(next);
-					startArea1 = next;
-					if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
-					{
-						startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
-						m_nBranchPathAreasCount++;
+					if (std::find(m_ConnectedAreas.begin(), m_ConnectedAreas.end(), next) == m_ConnectedAreas.end()) {
+						startArea1->connectArea(next);
+						startArea1 = next;
+						if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
+						{
+							startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
+							m_nBranchPathAreasCount++;
+						}
+						m_ConnectedAreas.push_back(startArea1);
 					}
-					m_ConnectedAreas.push_back(startArea1);
+				}
+			}
+			Area* last = m_ConnectedAreas[m_ConnectedAreas.size() - 1];
+			if (last)
+			{
+				for (size_t i = 0; i < last->getNeigbours().size(); i++)
+				{
+					Area* cn = static_cast<Area*>(last->getNeigbours()[i]);
+					if (cn && (cn->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_MainPath || cn->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_SidePath || cn == m_pAreaExit))
+						last->connectArea(cn);
 				}
 			}
 		}
@@ -471,6 +579,111 @@ bool DungeonGenerator::connectArea()
 	UE_LOG(LogTemp, Warning, TEXT("ConnectedAreas Count = %d"), (int)m_ConnectedAreas.size());
 #endif // WITH_EDITOR
 	return true;
+}
+
+bool DungeonGenerator::mergeSmallIntersectArea(Area* area, Area* other, bool generate)
+{
+	if (!area || !other)
+		return false;
+	if (area->getAreaType() != EAreaTypeEnum::ATE_Standard || other->getAreaType() != EAreaTypeEnum::ATE_Standard)
+		return false;
+
+	FBox2D rect = area->getIntersectRect(other);
+	if (rect.Min.X == rect.Max.X)
+	{
+		if (rect.Max.Y - rect.Min.Y < m_nMinAreaSize)
+			return false;
+
+		if (rect.GetSize().Y == FMath::Max(area->getRect().GetSize().Y, other->getRect().GetSize().Y)) 
+			return false;
+
+		if (area->getRect().GetSize().X + other->getRect().GetSize().X > m_nMaxSplitAreaSize) 
+			return false;
+
+		if (generate)
+		{
+			rect.Min.X += 0;
+			rect.Min.Y += 1;
+			rect.Max.X += 1;
+			rect.Max.Y += 0;
+			generateCells(rect.Min.X, rect.Min.Y, 1, rect.GetSize().Y, ECellTypeEnum::CTE_StandardFloor, area->getAreaType(), area->getAreaTypeMask());
+		}
+	}
+	else if(rect.Min.Y == rect.Max.Y)
+	{
+
+		if (rect.Max.X - rect.Min.X < m_nMinAreaSize)
+			return false;
+
+		if (rect.GetSize().X == FMath::Max(area->getRect().GetSize().X, other->getRect().GetSize().X))
+			return false;
+
+		if (area->getRect().GetSize().Y + other->getRect().GetSize().Y > m_nMaxSplitAreaSize) 
+			return false;
+
+		if (generate)
+		{
+			rect.Min.X += 1;
+			rect.Min.Y += 0;
+			rect.Max.X += 0;
+			rect.Max.Y += 1;
+			generateCells(rect.Min.X, rect.Min.Y, rect.GetSize().X, 1, ECellTypeEnum::CTE_StandardFloor, area->getAreaType(), area->getAreaTypeMask());
+		}
+	}
+	return true;
+}
+void DungeonGenerator::addUnusualAreas(Area* area, Area* otherArea)
+{
+	if (m_UnusualAreas.empty())
+	{
+		std::vector<Area*> unusualArea;
+		unusualArea.push_back(area);
+		m_nStandardAreaCount--;
+		unusualArea.push_back(otherArea);
+		m_nStandardAreaCount--;
+		m_UnusualAreas.push_back(unusualArea);
+		m_nUnusualAreaCount++;
+	}
+	else
+	{
+		bool find = false;
+		for (size_t i = 0; i < m_UnusualAreas.size(); i++)
+		{
+			if (std::find(m_UnusualAreas[i].begin(), m_UnusualAreas[i].end(), area) != m_UnusualAreas[i].end())
+			{
+				find = true;
+				if (std::find(m_UnusualAreas[i].begin(), m_UnusualAreas[i].end(), otherArea) == m_UnusualAreas[i].end())
+				{
+					m_UnusualAreas[i].push_back(otherArea);
+					m_nStandardAreaCount--;
+					break;
+				}
+			}
+			else if (std::find(m_UnusualAreas[i].begin(), m_UnusualAreas[i].end(), otherArea) != m_UnusualAreas[i].end())
+			{
+				find = true;
+				if (std::find(m_UnusualAreas[i].begin(), m_UnusualAreas[i].end(), area) == m_UnusualAreas[i].end())
+				{
+					m_UnusualAreas[i].push_back(area);
+					m_nStandardAreaCount--;
+					break;
+				}
+			}
+			else
+				continue;
+		}
+
+		if (!find)
+		{
+			std::vector<Area*> unusualArea;
+			unusualArea.push_back(area);
+			m_nStandardAreaCount--;
+			unusualArea.push_back(otherArea);
+			m_nStandardAreaCount--;
+			m_UnusualAreas.push_back(unusualArea);
+			m_nUnusualAreaCount++;
+		}
+	}
 }
 bool compareFunc(Area*& first, Area*& second)
 { 
@@ -631,18 +844,22 @@ bool DungeonGenerator::assignStandardAreasType()
 	int retry = 0;
 	while (m_nStandardAreaCount < 4) {
 		int rand = FMath::RandRange(0, (int)(m_Areas.size()) - 1);
-		Area* area = static_cast<Area*>(m_ConnectedAreas[rand]);
+		Area* area = static_cast<Area*>(m_Areas[rand]);
 		if (area != nullptr) {
 			if (area->getAreaType() == EAreaTypeEnum::ATE_Passage)
 			{
 				area->setAreaType(EAreaTypeEnum::ATE_Standard);
 				m_nTunnelAreaCount--;
+				if (m_nTunnelAreaCount < 0)
+					m_nTunnelAreaCount = 0;
 				m_nStandardAreaCount++;
 			}
 			else if (area->getAreaType() == EAreaTypeEnum::ATE_Tunnel)
 			{
 				area->setAreaType(EAreaTypeEnum::ATE_Standard);
 				m_nPassageAreaCount--;
+				if (m_nPassageAreaCount < 0)
+					m_nPassageAreaCount = 0;
 				m_nStandardAreaCount++;
 			}
 			else
@@ -665,9 +882,15 @@ bool DungeonGenerator::generateAreas()
 		if (area->getAreaType() != EAreaTypeEnum::ATE_Unknown)
 		{
 			if (!placeDoors(area))
+			{
+				UE_LOG(LogTemp, Fatal, TEXT("Place doors failed!"));
 				return false;
+			}
 			if (!area->generate())
+			{
+				UE_LOG(LogTemp, Fatal, TEXT("Area generate failed!"));
 				return false;
+			}
 		}
 	}
 	for (Area* area : m_ConnectedAreas) {
@@ -678,6 +901,12 @@ bool DungeonGenerator::generateAreas()
 			UE_LOG(LogTemp, Fatal, TEXT("Generate doors failed!"));
 			return false;
 		}
+	}
+	generateUnusualAreas();
+
+	for (Area* area : m_ConnectedAreas) {
+		if (!area)
+			return false;
 		if (!generateTraps(area))
 		{
 			UE_LOG(LogTemp, Fatal, TEXT("Generate traps failed!"));
@@ -685,6 +914,21 @@ bool DungeonGenerator::generateAreas()
 		}
 	}
 	
+	for (size_t i = 0; i < m_Doors.size(); i++)
+	{
+		Door* door = m_Doors[i];
+		if (door)
+		{
+			if (door->getDoorType() == EDoorTypeEnum::DTE_Standard)
+				m_nStandardDoorCount++;
+			else if (door->getDoorType() == EDoorTypeEnum::DTE_Locked)
+				m_nLockedDoorCount++;
+			else if (door->getDoorType() == EDoorTypeEnum::DTE_Hidden)
+				m_nHiddenDoorCount++;
+			else if (door->getDoorType() == EDoorTypeEnum::DTE_MissionLocked || door->getDoorType() == EDoorTypeEnum::DTE_Barricade || door->getDoorType() == EDoorTypeEnum::DTE_BossTreasury)
+				m_nSpecialDoorCount++;
+		}
+	}
 	return true;
 }
 bool DungeonGenerator::placeDoors(Area* area)
@@ -694,20 +938,32 @@ bool DungeonGenerator::placeDoors(Area* area)
 	for (auto iter = area->getConnectedAreas().begin(); iter != area->getConnectedAreas().end(); iter++) {
 		Area* areaOri = iter->first;
 		Door* door = iter->second;
-		if (areaOri)
+		if (!areaOri)
+			return false;
+		if (mergeSmallIntersectArea(area, areaOri, false))
+			continue;
+		if (door == nullptr)
 		{
-			if (door == nullptr)
+			FBox2D rect = area->getIntersectRect(areaOri);
+			if (rect.GetSize().X == 0)
 			{
 				door = new(std::nothrow) Door();
 				if (!door)
 					return false;
+				door->setPos(FVector2D(rect.Min.X, FMath::RandRange((int)rect.Min.Y + 1, (int)rect.Max.Y - 1)));
+			}
+			else if (rect.GetSize().Y == 0)
+			{
+				door = new(std::nothrow) Door();
+				if (!door)
+					return false;
+				door->setPos(FVector2D(FMath::RandRange((int)rect.Min.X + 1, (int)rect.Max.X - 1), rect.Min.Y));
+			}
+			else
+				continue;
+			if (door)
+			{
 				m_Doors.push_back(door);
-				
-				FBox2D rect = area->getIntersectRect(areaOri);
-				if (rect.GetSize().X == 0)
-					door->setPos(FVector2D(rect.Min.X, FMath::RandRange((int)rect.Min.Y + 1, (int)rect.Max.Y - 1)));
-				else
-					door->setPos(FVector2D(FMath::RandRange((int)rect.Min.X + 1, (int)rect.Max.X - 1), rect.Min.Y));
 				area->getConnectedAreas()[areaOri] = door;
 				areaOri->getConnectedAreas()[area] = door;
 			}
@@ -719,7 +975,73 @@ bool DungeonGenerator::generateDoors(Area* area)
 {
 	if (!area)
 		return false;
+	for (auto iter = area->getConnectedAreas().begin(); iter != area->getConnectedAreas().end(); iter++) {
+		Area* areaOri = iter->first;
+		if (mergeSmallIntersectArea(area, areaOri))
+		{
+			addUnusualAreas(area, areaOri);
+			continue;
+		}
+		Door* door = iter->second;
+		if (door)
+		{
+			EDirectEnum dir = EDirectEnum::DE_Unknown;
+			if (door->getPos().X == area->getRect().Min.X)
+				dir = EDirectEnum::DE_Left;
+			else if (door->getPos().X == area->getRect().Max.X)
+				dir = EDirectEnum::DE_Right;
+			else
+			{
+				if (door->getPos().Y == area->getRect().Min.Y)
+					dir = EDirectEnum::DE_Backward;
+				else if (door->getPos().Y == area->getRect().Max.Y)
+					dir = EDirectEnum::DE_Forward;
+			}
+			switch (door->getDoorType()) {
+			case EDoorTypeEnum::DTE_Empty:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_StandardFloor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_Passage:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_PassageFloor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_Tunnel:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_TunnelFloor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_Standard:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_StandardDoor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_Locked:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_LockedDoor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_Hidden:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_HiddenDoor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_MissionLocked:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_MissionLockedDoor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_Barricade:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_Barricade, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			case EDoorTypeEnum::DTE_BossTreasury:
+				setCellType(door->getPos().X, door->getPos().Y, ECellTypeEnum::CTE_BossTreasuryDoor, area->getAreaType(), area->getAreaTypeMask(), dir);
+				break;
+			default:
+				break;
+			}
+		}
+	}
 	return true;
+}
+void DungeonGenerator::generateUnusualAreas()
+{
+	for (size_t i = 0; i < m_UnusualAreas.size(); i++)
+	{
+		for (size_t j = 0; j < m_UnusualAreas[i].size(); j++)
+		{
+			m_UnusualAreas[i][j]->setAreaType(EAreaTypeEnum::ATE_Unusual);
+			m_UnusualAreas[i][j]->generate();
+		}
+	}
 }
 bool DungeonGenerator::generateTraps(Area* area)
 {
