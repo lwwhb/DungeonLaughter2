@@ -11,6 +11,13 @@
 #include "Area.h"
 
 UENUM(BlueprintType)
+enum class EDungeonType : uint8
+{
+	DTE_Test 	UMETA(DisplayName = "Test"),
+	DTE_Sewer 	UMETA(DisplayName = "Sewer")
+};
+
+UENUM(BlueprintType)
 enum class EDungeonStyle : uint8
 {
 	DSE_Standard 	UMETA(DisplayName = "Standard"),
@@ -25,6 +32,7 @@ public:
 	~DungeonGenerator();
 
 	static DungeonGenerator* getInstance();
+	static void releaseInstance();
 
 	bool setGeneratorSetting(int width, int height, int cellUnit = 10,int minSplitAreaSize = 7, int maxSplitAreaSize = 9, int minAreaSize = 3, int minSpecialAreaSize = 4,
 		bool doublePath = false, bool branchPath = false, bool loopBranchPath = false, bool multiLayerBranchPath = false, bool isImpasse = false, float secondaryAreaRatio = 0.0f,

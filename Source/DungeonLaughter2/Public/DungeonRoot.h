@@ -3,7 +3,7 @@
 #pragma once
 
 #include "GameFramework/Actor.h"
-#include "../Private/DungeonGenerator.h"
+#include "DungeonNodeComponent.h"
 #include "DungeonRoot.generated.h"
 
 UCLASS(Blueprintable)
@@ -11,40 +11,11 @@ class DUNGEONLAUGHTER2_API ADungeonRoot : public AActor
 {
 	GENERATED_BODY()
 public:	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Dungeon Style."))
-	EDungeonStyle DungeonStyle;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "X axis cells count."))
-	int CellCountX;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Y axis cells count"))
-	int CellCountY;
-	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Transient, Category = "Dungeon", meta = (ShortTooltip = "Total cells count."))
-	int CellTotalCount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Per cell unit."))
-	int CellUnit;
-
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Area split minimum size."))
-	int MinSplitAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Area split maximum size."))
-	int MaxSplitAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Area minimum size. Value must less than half of MinSplitAreaSize, MinAreaSize < MinSplitAreaSize/2."))
-	int MinAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Special Area minimum size. Value must more than MinAreaSize."))
-	int MinSpecialAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate two path from entrance to exit."))
-	bool UseDoublePath;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate branch exit."))
-	bool UseBranchExit;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate looped branch path."))
-	bool UseLoopBranchPath;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate multilayer branch path."))
-	bool MultiLayerBranchPath;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether the dungeon is impasse."))
-	bool IsImpasse;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))
-	float SecondaryAreaRatio;
 
 	// Sets default values for this actor's properties
 	ADungeonRoot();
+
+	virtual ~ADungeonRoot();
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -52,8 +23,39 @@ public:
 	// Called every frame
 	virtual void Tick( float DeltaSeconds ) override;
 
-	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Dungeon Type."))
+	EDungeonType DungeonType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Max Dungeon Depth."))
+	int MaxDungeonDepth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate boss in max depth."))
+	bool GenerateBoss;
+
 	// 蓝图逻辑调用部分 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
 	void GenerateDungeon2dData();
+
+	UFUNCTION(BlueprintCallable, Category = "Dungeon")
+	bool initRootDungeonNode(UDungeonNodeComponent* dungeonNode);
+
+	UFUNCTION(BlueprintCallable, Category = "Dungeon")
+	bool addLeftDungeonNode(UDungeonNodeComponent* dungeonNode, UDungeonNodeComponent* leftDungeonNode);
+
+	UFUNCTION(BlueprintCallable, Category = "Dungeon")
+	bool addRightDungeonNode(UDungeonNodeComponent* dungeonNode, UDungeonNodeComponent* rightDungeonNode);
+
+	UFUNCTION(BlueprintCallable, Category = "Dungeon")
+	bool doDownstair(int& depth, bool goBranch = false);
+
+	UFUNCTION(BlueprintCallable, Category = "Dungeon")
+	bool doUpstair(int& depth);
+private:
+	UDungeonNodeComponent*	m_pDungeonRoot;
+	UDungeonNodeComponent*	m_pCurrentDungeonNode;
+
+	FString			m_strDungeonName; 
+	FString			m_strBossDungeonName;
+	FString			m_strBranchDungeonName;
+	FString			m_strBranchBossDungeonName;
 };

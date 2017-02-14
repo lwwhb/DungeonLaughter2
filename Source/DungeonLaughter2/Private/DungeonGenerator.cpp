@@ -13,6 +13,14 @@ DungeonGenerator* DungeonGenerator::getInstance()
 
 	return g_pDungeonGeneratorInstance;
 }
+void DungeonGenerator::releaseInstance()
+{
+	if (g_pDungeonGeneratorInstance)
+	{
+		delete g_pDungeonGeneratorInstance;
+		g_pDungeonGeneratorInstance = nullptr;
+	}
+}
 DungeonGenerator::DungeonGenerator()
 {
 	reset();
@@ -100,7 +108,7 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 	{
 		for (int j = 0; j < m_nWidth; j++)
 		{
-			int index = i*m_nHeight + j;
+			int index = i*m_nWidth + j;
 			m_Map[index].setIndexX(j);
 			m_Map[index].setIndexY(i);
 		}

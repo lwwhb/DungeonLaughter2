@@ -11,7 +11,7 @@ class PathGraphNode
 {
 public:
 	PathGraphNode();
-	~PathGraphNode();
+	virtual ~PathGraphNode();
 
 public:
 	virtual int getDistance() const;

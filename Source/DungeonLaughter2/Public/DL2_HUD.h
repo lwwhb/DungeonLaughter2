@@ -19,6 +19,7 @@ class DUNGEONLAUGHTER2_API ADL2_HUD : public AHUD
 	virtual void DrawHUD() override;
 
 #if WITH_EDITOR
+	void reset();
 private:
 	void EnableStep1();
 	void EnableStep2();

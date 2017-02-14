@@ -11,6 +11,7 @@ void ADL2_HUD::BeginPlay()
 	Super::BeginPlay();
 
 #if WITH_EDITOR
+	reset();
 	unit = DungeonGenerator::getInstance()->getCellUnit();
 	enableStep1 = enableStep2 = enableStep3 = enableStep4 = enableStep5 = enableStep6 = enableStep7 = false;
 	GetWorldTimerManager().SetTimer(m_TimerHandle, this, &ADL2_HUD::EnableStep1, 1.0f, false);
@@ -39,6 +40,17 @@ void ADL2_HUD::DrawHUD()
 }
 
 #if WITH_EDITOR
+
+void ADL2_HUD::reset()
+{
+	enableStep1 = false;
+	enableStep2 = false;
+	enableStep3 = false;
+	enableStep4 = false;
+	enableStep5 = false;
+	enableStep6 = false;
+	enableStep7 = false;
+}
 void ADL2_HUD::EnableStep1() 
 { 
 	enableStep1 = true; 
