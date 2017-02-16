@@ -2,10 +2,15 @@
 
 #include "DungeonLaughter2.h"
 #include "DL2_HUD.h"
+#include "DungeonRoot.h"
 #include "../Private/DungeonGenerator.h"
 #include "../Private/Area.h"
+#include "DungeonNodeComponent.h"
 
-
+ADL2_HUD::ADL2_HUD()
+{
+	m_pDungeonRoot = nullptr;
+}
 void ADL2_HUD::BeginPlay()
 {
 	Super::BeginPlay();
@@ -15,6 +20,14 @@ void ADL2_HUD::BeginPlay()
 	unit = DungeonGenerator::getInstance()->getCellUnit();
 	enableStep1 = enableStep2 = enableStep3 = enableStep4 = enableStep5 = enableStep6 = enableStep7 = false;
 	GetWorldTimerManager().SetTimer(m_TimerHandle, this, &ADL2_HUD::EnableStep1, 1.0f, false);
+
+	UWorld* world = GetWorld();
+	if (world)
+	{
+		int index = -1;
+		if (!world->GetCurrentLevel()->Actors.FindItemByClass<ADungeonRoot>(&m_pDungeonRoot, &index))
+			FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("This level need a ADungeonRoot object.")));
+	}
 #endif // WITH_EDITOR
 }
 void ADL2_HUD::DrawHUD()
@@ -34,8 +47,11 @@ void ADL2_HUD::DrawHUD()
 		DrawSplitLines();
 	if (enableStep7)
 		DrawFinalMap();
-	if(enableStep1)
+	if (enableStep1)
+	{
 		DrawStatistics();
+		DrawDungeonTreeInfo();
+	}
 #endif // WITH_EDITOR
 }
 
@@ -366,5 +382,78 @@ void ADL2_HUD::DrawStatistics()
 	DrawText(text, FLinearColor(0.2f, 0.2f, 0.2f, 1.0f), (width + 2)*unit, unit * 35);
 	text = "Special Door count : " + FString::FromInt(DungeonGenerator::getInstance()->getSpecialDoorCount());
 	DrawText(text, FLinearColor(FColor::Magenta), (width + 2)*unit, unit * 37);
+}
+void ADL2_HUD::DrawCircle(const FVector2D& Center, const FColor& Color, int32 NumSides, float Radius)
+{
+	if (IsCanvasValid_WarnIfNot())
+	{
+		FCanvasNGonItem NGonItem(Center, FVector2D(Radius, Radius), FMath::Clamp(NumSides, 3, 255), Color);
+		NGonItem.BlendMode = SE_BLEND_Translucent;
+		Canvas->DrawItem(NGonItem);
+	}
+}
+void ADL2_HUD::DrawDungeonNode(UDungeonNodeComponent* node, const FVector2D& Center)
+{
+	FColor color;
+	if (node->getVisitedType() == EVisitedType::VTE_NO)
+		color = FColor::Blue;
+	else if (node->getVisitedType() == EVisitedType::VTE_YES)
+		color = FColor::Yellow;
+	else
+		color = FColor::Green;
+	
+	if (node->IsBossDungeonNode)
+		color = FColor::Magenta;
+
+	FVector2D leftCenter, rightCenter;
+	if (node->getLeftNode())
+	{
+		leftCenter = FVector2D(Center.X - unit * 4, unit * 8 * node->getLeftNode()->NodeDepth);
+		DrawLine(Center.X, Center.Y, leftCenter.X, leftCenter.Y, FLinearColor(FColor::Orange), 2.0f);
+	}
+	if (node->getRightNode())
+	{
+		rightCenter = FVector2D(Center.X + unit * 4, unit * 8 * node->getRightNode()->NodeDepth);
+		DrawLine(Center.X, Center.Y, rightCenter.X, rightCenter.Y, FLinearColor(FColor::Cyan), 2.0f);
+	}
+
+	if (node == m_pDungeonRoot->getCurrentDungeonNode())
+	{
+		DrawCircle(Center, FColor::Red, 20, 25);
+	}
+
+	DrawCircle(Center, color, 20, 20);
+
+	if(node->getLeftNode())
+		DrawDungeonNode(node->getLeftNode(), leftCenter);
+	if(node->getRightNode())
+		DrawDungeonNode(node->getRightNode(), rightCenter);
+
+	
+	DrawText(node->DungeonNodeName, FLinearColor::White, Center.X - unit*2.5f, Center.Y + unit*2.5f);
+}
+void ADL2_HUD::DrawDungeonTreeInfo()
+{
+	if (m_pDungeonRoot)
+	{	
+		FVector2D viewportSize;
+		GEngine->GameViewport->GetViewportSize(viewportSize);
+		int width = DungeonGenerator::getInstance()->getWidth();
+		int height = DungeonGenerator::getInstance()->getHeight();
+
+		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EDungeonType"), true);
+		if (!EnumPtr)
+			return;
+		FString text = "Dungeon Type : " + EnumPtr->GetEnumName((int32)m_pDungeonRoot->DungeonType);
+		DrawText(text, FLinearColor(FColor::White), (width + 2)*unit + viewportSize.X*0.35f, unit, nullptr, 2.0f);
+
+		DrawText("Max Dungeon Depth : " + FString::FromInt(m_pDungeonRoot->MaxDungeonDepth), FLinearColor::Green, (width + 2)*unit + viewportSize.X*0.40f, unit * 5);
+		if (m_pDungeonRoot->getCurrentDungeonNode())
+			DrawText("Current Dungeon Depth : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->NodeDepth), FLinearColor::Yellow, (width + 2)*unit + viewportSize.X*0.40f, unit * 7);
+
+		UDungeonNodeComponent* root = m_pDungeonRoot->getRootDungeonNode();
+		if (root)
+			DrawDungeonNode(root, FVector2D((width + 2)*unit + viewportSize.X*0.3f, unit * 8 * root->NodeDepth));
+	}
 }
 #endif // WITH_EDITOR

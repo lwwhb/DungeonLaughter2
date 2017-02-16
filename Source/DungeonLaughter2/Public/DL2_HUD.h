@@ -5,6 +5,8 @@
 #include "GameFramework/HUD.h"
 #include "DL2_HUD.generated.h"
 
+class UDungeonNodeComponent;
+class ADungeonRoot;
 /**
  * 
  */
@@ -12,6 +14,8 @@ UCLASS()
 class DUNGEONLAUGHTER2_API ADL2_HUD : public AHUD
 {
 	GENERATED_BODY()
+
+	ADL2_HUD();
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -35,6 +39,10 @@ private:
 	void DrawEntranceAreaAndExitArea();
 	void DrawFinalMap();
 	void DrawStatistics();
+
+	void DrawCircle(const FVector2D& Center, const FColor& Color, int32 NumSides, float Radius);
+	void DrawDungeonNode(UDungeonNodeComponent* node, const FVector2D& Center);
+	void DrawDungeonTreeInfo();
 private:
 	FTimerHandle  m_TimerHandle;
 	bool enableStep1;
@@ -46,6 +54,8 @@ private:
 	bool enableStep7;
 
 	int unit;
+
+	ADungeonRoot*	m_pDungeonRoot;
 #endif // WITH_EDITOR
 	
 };

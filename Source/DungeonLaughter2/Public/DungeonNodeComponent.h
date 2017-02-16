@@ -6,13 +6,20 @@
 #include "../Private/DungeonGenerator.h"
 #include "DungeonNodeComponent.generated.h"
 
+UENUM(BlueprintType)
+enum class EVisitedType : uint8
+{
+	VTE_NO 		UMETA(DisplayName = "Visited_No"),			///没有进入过
+	VTE_YES 	UMETA(DisplayName = "Visited_Yes"),			///进入过但没探索完成
+	VTE_ALL		UMETA(DisplayName = "Visited_All")			///进入过并且探索完成
+};
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class DUNGEONLAUGHTER2_API UDungeonNodeComponent : public UActorComponent
 {
+	friend class ADungeonRoot;
 	GENERATED_BODY()
-
-public:	
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Dungeon Style."))
 	EDungeonStyle DungeonStyle;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "X axis cells count."))
@@ -23,6 +30,8 @@ public:
 	int CellTotalCount;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Per cell unit."))
 	int CellUnit;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Wether dungeon node is boss dungeon node."))
+	bool IsBossDungeonNode;
 
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Area split minimum size."))
 	int MinSplitAreaSize;
@@ -44,27 +53,32 @@ public:
 	bool IsImpasse;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))
 	float SecondaryAreaRatio;
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Need regenerate current dungeon."))
+	bool  Regenerate;		///是否重新生成地牢
 
 	UPROPERTY(BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Dungeon node name."))
-	FString			m_strDungeonNodeName;
+	FString	DungeonNodeName;
 	UPROPERTY(BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Dungeon node depth."))
-	int				m_nNodeDepth;
-	UPROPERTY(BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Wether dungeon node is boss dungeon node."))
-	bool			m_bIsBossDungeonNode;
-
-	UDungeonNodeComponent*	m_pParentNode;		///父节点
-	UDungeonNodeComponent*	m_pLeftNode;		///main path
-	UDungeonNodeComponent*	m_pRightNode;		///branch path
+	int NodeDepth;
 
 	// Sets default values for this component's properties
 	UDungeonNodeComponent();
 
 	// Called when the game starts
 	virtual void BeginPlay() override;
-	
-	// Called every frame
-	virtual void TickComponent( float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction ) override;
 
-		
-	
+	// Called every frame
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	UDungeonNodeComponent* getParentNode() const { return m_pParentNode; }
+	UDungeonNodeComponent* getLeftNode() const { return m_pLeftNode; }
+	UDungeonNodeComponent* getRightNode() const { return m_pRightNode; }
+	EVisitedType getVisitedType() const { return m_VisitedType; }
+private:
+	UDungeonNodeComponent*	m_pParentNode;		///父节点
+	UDungeonNodeComponent*	m_pLeftNode;		///main path
+	UDungeonNodeComponent*	m_pRightNode;		///branch path
+	EVisitedType			m_VisitedType;
+
+	std::vector<Cell>	m_Map;
 };

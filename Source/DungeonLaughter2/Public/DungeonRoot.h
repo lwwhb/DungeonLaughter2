@@ -6,6 +6,16 @@
 #include "DungeonNodeComponent.h"
 #include "DungeonRoot.generated.h"
 
+
+
+UENUM(BlueprintType)
+enum class ERandomGenerateType : uint8
+{
+	RGTE_CompletedRandom			UMETA(DisplayName = "CompletedRandom"),			///完全随机
+	RGTE_ComplexityAscending		UMETA(DisplayName = "ComplexityAscending"),		///复杂度升序
+	RGTE_ComplexityDescending		UMETA(DisplayName = "ComplexityDescending")		///复杂度降序
+};
+
 UCLASS(Blueprintable)
 class DUNGEONLAUGHTER2_API ADungeonRoot : public AActor
 {
@@ -26,15 +36,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Dungeon Type."))
 	EDungeonType DungeonType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Max Dungeon Depth."))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Transient, Category = "Dungeon", meta = (ShortTooltip = "Max Dungeon Depth."))
 	int MaxDungeonDepth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Wether generate boss in max depth."))
-	bool GenerateBoss;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Whether generate dungeon tree randomly."))
+	bool RandomGenerate;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ShortTooltip = "Generate dungeon sort by complexity."))
+	ERandomGenerateType RandomGenerateType;
+
+	///UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ShortTooltip = "Generate dungeon sort by complexity."))
+	///TRange<int> RandomGenerateType;
 
 	// 蓝图逻辑调用部分 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
-	void GenerateDungeon2dData();
+	bool generateRandomDungeonTree(UDungeonNodeComponent* dungeonNode);
 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
 	bool initRootDungeonNode(UDungeonNodeComponent* dungeonNode);
@@ -46,10 +62,19 @@ public:
 	bool addRightDungeonNode(UDungeonNodeComponent* dungeonNode, UDungeonNodeComponent* rightDungeonNode);
 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
+	bool enterDungeon();
+
+	UFUNCTION(BlueprintCallable, Category = "Dungeon")
 	bool doDownstair(int& depth, bool goBranch = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
 	bool doUpstair(int& depth);
+
+	UDungeonNodeComponent* getRootDungeonNode() const { return m_pDungeonRoot; }
+	UDungeonNodeComponent* getCurrentDungeonNode() const { return m_pCurrentDungeonNode; }
+
+private:
+	void GenerateDungeon2dData();
 private:
 	UDungeonNodeComponent*	m_pDungeonRoot;
 	UDungeonNodeComponent*	m_pCurrentDungeonNode;

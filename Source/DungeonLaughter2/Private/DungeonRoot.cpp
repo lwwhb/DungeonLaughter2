@@ -12,7 +12,8 @@ ADungeonRoot::ADungeonRoot()
 
 	DungeonType = EDungeonType::DTE_Test;
 	MaxDungeonDepth = 1;
-	GenerateBoss = false;
+	RandomGenerate = false;
+	RandomGenerateType = ERandomGenerateType::RGTE_CompletedRandom;
 
 	m_pDungeonRoot				= nullptr;
 	m_pCurrentDungeonNode		= nullptr;
@@ -61,17 +62,22 @@ void ADungeonRoot::GenerateDungeon2dData()
 		m_pCurrentDungeonNode->DungeonStyle
 		))
 		return;
-	if(!DungeonGenerator::getInstance()->generateDungeon())
+	if(!DungeonGenerator::getInstance()->generateDungeon(m_pCurrentDungeonNode->m_Map))
 		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon failed!"));
 }
-
+bool ADungeonRoot::generateRandomDungeonTree(UDungeonNodeComponent* dungeonNode)
+{
+	if (!initRootDungeonNode(dungeonNode))
+		return false;
+	return true;
+}
 bool ADungeonRoot::initRootDungeonNode(UDungeonNodeComponent* dungeonNode)
 {
 	if (!dungeonNode)
 		return false;
 	m_pDungeonRoot = dungeonNode;
-	m_pCurrentDungeonNode = m_pDungeonRoot;
-	m_pDungeonRoot->m_nNodeDepth = 1;
+	m_pDungeonRoot->NodeDepth = 1;
+	MaxDungeonDepth = FMath::Max(MaxDungeonDepth, m_pDungeonRoot->NodeDepth);
 	return true;
 }
 bool ADungeonRoot::addLeftDungeonNode(UDungeonNodeComponent* dungeonNode, UDungeonNodeComponent* leftDungeonNode)
@@ -80,7 +86,8 @@ bool ADungeonRoot::addLeftDungeonNode(UDungeonNodeComponent* dungeonNode, UDunge
 		return false;
 	dungeonNode->m_pLeftNode = leftDungeonNode;
 	dungeonNode->m_pLeftNode->m_pParentNode = dungeonNode;
-	dungeonNode->m_pLeftNode->m_nNodeDepth = dungeonNode->m_nNodeDepth + 1;
+	dungeonNode->m_pLeftNode->NodeDepth = dungeonNode->NodeDepth + 1;
+	MaxDungeonDepth = FMath::Max(MaxDungeonDepth, dungeonNode->m_pLeftNode->NodeDepth);
 	return true;
 }
 
@@ -88,11 +95,31 @@ bool ADungeonRoot::addRightDungeonNode(UDungeonNodeComponent* dungeonNode, UDung
 {
 	if (!dungeonNode || !m_pDungeonRoot || !rightDungeonNode)
 		return false;
+	if (!dungeonNode->UseBranchExit)
+	{
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If Parent Node doesn't use branch exit, Can't add right dungeon node.")));
+		return false;
+	}
 	dungeonNode->m_pRightNode = rightDungeonNode;
 	dungeonNode->m_pRightNode->m_pParentNode = dungeonNode;
-	dungeonNode->m_pRightNode->m_nNodeDepth = dungeonNode->m_nNodeDepth + 1;
+	dungeonNode->m_pRightNode->NodeDepth = dungeonNode->NodeDepth + 1;
+	MaxDungeonDepth = FMath::Max(MaxDungeonDepth, dungeonNode->m_pRightNode->NodeDepth);
 	return true;
 }
+bool ADungeonRoot::enterDungeon()
+{
+	if (!m_pDungeonRoot || m_pCurrentDungeonNode != nullptr)
+		return false;
+	m_pCurrentDungeonNode = m_pDungeonRoot;
+	m_pCurrentDungeonNode->m_VisitedType = EVisitedType::VTE_YES;
+
+	if (m_pCurrentDungeonNode->Regenerate)
+		m_pCurrentDungeonNode->m_Map.clear();
+	if (m_pCurrentDungeonNode->m_Map.empty())
+		GenerateDungeon2dData();
+	return true;
+}
+
 bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 {
 	if (!m_pDungeonRoot || !m_pCurrentDungeonNode)
@@ -102,14 +129,26 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 		if (!m_pCurrentDungeonNode->m_pRightNode)
 			return false;
 		m_pCurrentDungeonNode = m_pCurrentDungeonNode->m_pRightNode;
-		depth = m_pCurrentDungeonNode->m_nNodeDepth;
+		m_pCurrentDungeonNode->m_VisitedType = EVisitedType::VTE_YES;
+		depth = m_pCurrentDungeonNode->NodeDepth;
+
+		if (m_pCurrentDungeonNode->Regenerate)
+			m_pCurrentDungeonNode->m_Map.clear();
+		if (m_pCurrentDungeonNode->m_Map.empty())
+			GenerateDungeon2dData();
 	}
 	else
 	{
 		if (!m_pCurrentDungeonNode->m_pLeftNode)
 			return false;
 		m_pCurrentDungeonNode = m_pCurrentDungeonNode->m_pLeftNode;
-		depth = m_pCurrentDungeonNode->m_nNodeDepth;
+		m_pCurrentDungeonNode->m_VisitedType = EVisitedType::VTE_YES;
+		depth = m_pCurrentDungeonNode->NodeDepth;
+
+		if (m_pCurrentDungeonNode->Regenerate)
+			m_pCurrentDungeonNode->m_Map.clear();
+		if (m_pCurrentDungeonNode->m_Map.empty())
+			GenerateDungeon2dData();
 	}
 	return true;
 }
@@ -121,6 +160,11 @@ bool ADungeonRoot::doUpstair(int& depth)
 	if (!m_pCurrentDungeonNode->m_pParentNode)
 		return false;
 	m_pCurrentDungeonNode = m_pCurrentDungeonNode->m_pParentNode;
-	depth = m_pCurrentDungeonNode->m_nNodeDepth;
+	depth = m_pCurrentDungeonNode->NodeDepth;
+
+	if (m_pCurrentDungeonNode->Regenerate)
+		m_pCurrentDungeonNode->m_Map.clear();
+	if(m_pCurrentDungeonNode->m_Map.empty())
+		GenerateDungeon2dData();
 	return true;
 }

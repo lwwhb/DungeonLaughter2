@@ -17,6 +17,7 @@ UDungeonNodeComponent::UDungeonNodeComponent()
 	CellCountY = 32;
 	CellTotalCount = CellCountX * CellCountY;
 	CellUnit = 10;
+	IsBossDungeonNode = false;
 
 	MinSplitAreaSize = 7;
 	MaxSplitAreaSize = 9;
@@ -28,14 +29,15 @@ UDungeonNodeComponent::UDungeonNodeComponent()
 	MultiLayerBranchPath = false;
 	IsImpasse = false;
 	SecondaryAreaRatio = 0.0f;
+	Regenerate = false;
 
-	m_strDungeonNodeName = "";
-	m_nNodeDepth	= 0;
-	m_bIsBossDungeonNode = false;
+	DungeonNodeName = "";
+	NodeDepth	= 0;
 
 	m_pParentNode	= nullptr;		///¸¸½Úµã
 	m_pLeftNode		= nullptr;		///main path
 	m_pRightNode	= nullptr;		///branch path
+	m_VisitedType	= EVisitedType::VTE_NO;
 }
 
 

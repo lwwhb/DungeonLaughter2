@@ -115,7 +115,7 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 	}
 	return true;
 }
-bool DungeonGenerator::generateDungeon()
+bool DungeonGenerator::generateDungeon(std::vector<Cell>& map)
 {
 	if (m_Map.empty())
 	{
@@ -142,6 +142,7 @@ bool DungeonGenerator::generateDungeon()
 		UE_LOG(LogTemp, Fatal, TEXT("Generate areas failed!"));
 		return false;
 	}
+	map = m_Map;
 	return true;
 }
 void DungeonGenerator::generateCells(int x, int y, int width, int height, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct)
