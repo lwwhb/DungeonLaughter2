@@ -22,24 +22,24 @@ class DUNGEONLAUGHTER2_API UDungeonNodeComponent : public UActorComponent
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Dungeon Style."))
 	EDungeonStyle DungeonStyle;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "X axis cells count."))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 32, ClampMax = 96, ShortTooltip = "X axis cells count."))
 	int CellCountX;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Y axis cells count"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 32, ClampMax = 96, ShortTooltip = "Y axis cells count"))
 	int CellCountY;
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Transient, Category = "DungeonNode", meta = (ShortTooltip = "Total cells count."))
 	int CellTotalCount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Per cell unit."))
+	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Transient, Category = "DungeonNode", meta = (ShortTooltip = "Per cell unit."))
 	int CellUnit;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Wether dungeon node is boss dungeon node."))
 	bool IsBossDungeonNode;
 
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Area split minimum size."))
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 7, ClampMax = 16, ShortTooltip = "Area split minimum size."))
 	int MinSplitAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Area split maximum size."))
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 8, ClampMax = 16, ShortTooltip = "Area split maximum size."))
 	int MaxSplitAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Area minimum size. Value must less than half of MinSplitAreaSize, MinAreaSize < MinSplitAreaSize/2."))
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 3, ClampMax = 1000, ShortTooltip = "Area minimum size. Value must less than half of MinSplitAreaSize, MinAreaSize < MinSplitAreaSize/2."))
 	int MinAreaSize;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Special Area minimum size. Value must more than MinAreaSize."))
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 4, ClampMax = 16, ShortTooltip = "Special Area minimum size. Value must more than MinAreaSize."))
 	int MinSpecialAreaSize;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Wether generate two path from entrance to exit."))
 	bool UseDoublePath;
@@ -51,7 +51,7 @@ public:
 	bool MultiLayerBranchPath;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Wether the dungeon is impasse."))
 	bool IsImpasse;
-	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))
+	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ClampMin = 0.0f, ClampMax = 0.5f, ShortTooltip = "Secondary Area gentertion ratio. Range 0.0~0.5"))
 	float SecondaryAreaRatio;
 	UPROPERTY(EditAnywhere, AdvancedDisplay, BlueprintReadWrite, Category = "DungeonNode", meta = (ShortTooltip = "Need regenerate current dungeon."))
 	bool  Regenerate;		///是否重新生成地牢

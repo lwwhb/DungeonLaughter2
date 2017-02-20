@@ -13,7 +13,7 @@
 UENUM(BlueprintType)
 enum class EDungeonType : uint8
 {
-	DTE_Test 	UMETA(DisplayName = "Test"),
+	DTE_Sample 	UMETA(DisplayName = "Sample"),
 	DTE_Sewer 	UMETA(DisplayName = "Sewer")
 };
 

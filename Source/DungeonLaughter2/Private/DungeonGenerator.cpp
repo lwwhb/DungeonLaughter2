@@ -48,9 +48,9 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MaxSplitAreaSize value must between 8 to 16.")));
 		return false;
 	}
-	if (minSplitAreaSize > 16 || minSplitAreaSize < 4)
+	if (minSplitAreaSize > 16 || minSplitAreaSize < 7)
 	{
-		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MaxSplitAreaSize value must between 4 to 16.")));
+		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("MaxSplitAreaSize value must between 7 to 16.")));
 		return false;
 	}
 	if (minSplitAreaSize > maxSplitAreaSize)

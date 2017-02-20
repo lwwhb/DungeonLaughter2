@@ -12,8 +12,7 @@ UENUM(BlueprintType)
 enum class ERandomGenerateType : uint8
 {
 	RGTE_CompletedRandom			UMETA(DisplayName = "CompletedRandom"),			///ÍêÈ«Ëæ»ú
-	RGTE_ComplexityAscending		UMETA(DisplayName = "ComplexityAscending"),		///¸´ÔÓ¶ÈÉýÐò
-	RGTE_ComplexityDescending		UMETA(DisplayName = "ComplexityDescending")		///¸´ÔÓ¶È½µÐò
+	RGTE_ComplexityAscending		UMETA(DisplayName = "ComplexityAscending")		///¸´ÔÓ¶ÈÉýÐò
 };
 
 UCLASS(Blueprintable)
@@ -39,18 +38,42 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleAnywhere, Transient, Category = "Dungeon", meta = (ShortTooltip = "Max Dungeon Depth."))
 	int MaxDungeonDepth;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ShortTooltip = "Whether generate dungeon tree randomly."))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dungeon", meta = (ClampMin = 1, ShortTooltip = "Per cell unit."))
+	int CellUnit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ShortTooltip = "Whether generate dungeon tree randomly."))
 	bool RandomGenerate;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ShortTooltip = "Generate dungeon sort by complexity."))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 1, ClampMax = 5, EditCondition = "RandomGenerate", ShortTooltip = "Random min dungeon depth."))
+	int RandomMinDungeonDepth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 1, ClampMax = 5, EditCondition = "RandomGenerate", ShortTooltip = "Random max dungeon depth."))
+	int RandomMaxDungeonDepth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (EditCondition = "RandomGenerate", ShortTooltip = "Generate dungeon sort by complexity."))
 	ERandomGenerateType RandomGenerateType;
 
-	///UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ShortTooltip = "Generate dungeon sort by complexity."))
-	///TRange<int> RandomGenerateType;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 32, ClampMax = 96, EditCondition = "RandomGenerate", ShortTooltip = "Random cell count X min value."))
+	int RandomMinCellCountX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 32, ClampMax = 96, EditCondition = "RandomGenerate", ShortTooltip = "Random cell count X max value."))
+	int RandomMaxCellCountX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 32, ClampMax = 96, EditCondition = "RandomGenerate", ShortTooltip = "Random cell count Y min value."))
+	int RandomMinCellCountY;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 32, ClampMax = 96, EditCondition = "RandomGenerate", ShortTooltip = "Random cell count Y max value."))
+	int RandomMaxCellCountY;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 7, ClampMax = 16, EditCondition = "RandomGenerate", ShortTooltip = "Random split area size min value."))
+	int RandomMinSplitAreaSize;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 8, ClampMax = 16, EditCondition = "RandomGenerate", ShortTooltip = "Random split area size max value."))
+	int RandomMaxSplitAreaSize;
 
 	// À¶Í¼Âß¼­µ÷ÓÃ²¿·Ö 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
-	bool generateRandomDungeonTree(UDungeonNodeComponent* dungeonNode);
+	bool generateRandomDungeonTree();
 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
 	bool initRootDungeonNode(UDungeonNodeComponent* dungeonNode);
@@ -74,6 +97,8 @@ public:
 	UDungeonNodeComponent* getCurrentDungeonNode() const { return m_pCurrentDungeonNode; }
 
 private:
+	bool generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
+	bool generateRightRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
 	void GenerateDungeon2dData();
 private:
 	UDungeonNodeComponent*	m_pDungeonRoot;
