@@ -164,11 +164,14 @@ bool Area::generatePassageArea()
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
 		Area* other = iter->first;
-		if (!door || !other)
+		if (!other)
 			return false;
-		if (door->getDoorType() != EDoorTypeEnum::DTE_Empty)
-			continue;
-		door->setDoorType(EDoorTypeEnum::DTE_Passage);
+		if (door)
+		{
+			if (door->getDoorType() != EDoorTypeEnum::DTE_Empty)
+				continue;
+			door->setDoorType(EDoorTypeEnum::DTE_Passage);
+		}
 	}
 	return true;
 }
@@ -274,11 +277,14 @@ bool Area::generateTunnelArea()
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
 		Area* other = iter->first;
-		if (!door || !other)
+		if (!other)
 			return false;
-		if (door->getDoorType() != EDoorTypeEnum::DTE_Empty)
-			continue;
-		door->setDoorType(EDoorTypeEnum::DTE_Tunnel);
+		if (door)
+		{
+			if (door->getDoorType() != EDoorTypeEnum::DTE_Empty)
+				continue;
+			door->setDoorType(EDoorTypeEnum::DTE_Tunnel);
+		}
 	}
 	return true;
 }

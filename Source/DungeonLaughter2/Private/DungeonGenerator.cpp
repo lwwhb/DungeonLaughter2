@@ -78,11 +78,6 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it doesn't generate branch path, you can't generate multiLayer branch path.")));
 		return false;
 	}
-	if (isImpasse && branchPath)
-	{
-		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("If it's impasse dungeon, it can't generate branch path.")));
-		return false;
-	}
 	if (secondaryAreaRatio < 0.0f || secondaryAreaRatio > 0.5f)
 	{
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("SecondaryAreaRatio value must between 0.0f~0.5f")));
@@ -91,6 +86,7 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 	m_nWidth = width + 1;
 	m_nHeight = height + 1;
 	m_nCellUnit = cellUnit;
+	m_nDisplayCellUnit = m_nCellUnit;
 	m_nMinSplitAreaSize = minSplitAreaSize;
 	m_nMaxSplitAreaSize = maxSplitAreaSize;
 	m_nMinAreaSize = minAreaSize;				///最小区域大小
@@ -100,6 +96,8 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 	m_bLoopBranchPath = loopBranchPath;
 	m_bMultiLayerBranchPath = multiLayerBranchPath;
 	m_bIsImpasse = isImpasse;
+	if (m_bIsImpasse)
+		m_bMultiLayerBranchPath = false;
 	m_fSecondaryAreaRatio = secondaryAreaRatio;
 	m_DungeonStyle = dungeonStyle;
 
@@ -288,6 +286,7 @@ void DungeonGenerator::reset()
 	m_nWidth = 0;
 	m_nHeight = 0;
 	m_nCellUnit = 10;
+	m_nDisplayCellUnit = m_nCellUnit;
 
 	m_nMinSplitAreaSize = 0;
 	m_nMaxSplitAreaSize = 0;
@@ -296,11 +295,11 @@ void DungeonGenerator::reset()
 
 	m_DungeonStyle = EDungeonStyle::DSE_Standard;
 
-	m_nMainPathAreasCount = 0;
-	m_nSidePathAreasCount = 0;
-	m_nBranchPathAreasCount = 0;
-	m_nSecondaryAreasCount = 0;
-	m_nPivotalAreasCount = 0;
+	m_nMainPathAreaCount = 0;
+	m_nSidePathAreaCount = 0;
+	m_nBranchPathAreaCount = 0;
+	m_nSecondaryAreaCount = 0;
+	m_nPivotalAreaCount = 0;
 	m_nSpecialAreaCount = 0;
 	m_nUnusualAreaCount = 0;
 	m_nStandardAreaCount = 0;
@@ -455,7 +454,7 @@ bool DungeonGenerator::connectArea()
 				if (startArea->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
 				{
 					startArea->setAreaTypeMask(EAreaTypeMaskEnum::ATME_MainPath);
-					m_nMainPathAreasCount++;
+					m_nMainPathAreaCount++;
 				}
 				m_ConnectedAreas.push_back(startArea);
 			}
@@ -480,7 +479,7 @@ bool DungeonGenerator::connectArea()
 					if (startArea->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
 					{
 						startArea->setAreaTypeMask(EAreaTypeMaskEnum::ATME_SidePath);
-						m_nSidePathAreasCount++;
+						m_nSidePathAreaCount++;
 					}
 					m_ConnectedAreas.push_back(startArea);
 				}
@@ -516,7 +515,7 @@ bool DungeonGenerator::connectArea()
 					if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
 					{
 						startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
-						m_nBranchPathAreasCount++;
+						m_nBranchPathAreaCount++;
 					}
 					m_ConnectedAreas.push_back(startArea1);
 				}
@@ -540,7 +539,7 @@ bool DungeonGenerator::connectArea()
 						if (startArea1->getAreaType() == EAreaTypeEnum::ATE_Unknown && startArea1->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
 						{
 							startArea1->setAreaTypeMask(EAreaTypeMaskEnum::ATME_BranchPath);
-							m_nBranchPathAreasCount++;
+							m_nBranchPathAreaCount++;
 						}
 						m_ConnectedAreas.push_back(startArea1);
 					}
@@ -576,7 +575,7 @@ bool DungeonGenerator::connectArea()
 				if (oa->getAreaType() == EAreaTypeEnum::ATE_Unknown && oa->getAreaTypeMask() == EAreaTypeMaskEnum::ATME_Unknown)
 				{
 					oa->setAreaTypeMask(EAreaTypeMaskEnum::ATME_SecondaryArea);
-					m_nSecondaryAreasCount++;
+					m_nSecondaryAreaCount++;
 				}
 				m_ConnectedAreas.push_back(oa);
 			}
@@ -725,7 +724,7 @@ bool DungeonGenerator::assignAreasType()
 		{
 			m_MainPathAreas[i]->setAreaType(EAreaTypeEnum::ATE_Pivotal);
 			m_PivotalAreas.push_back(m_MainPathAreas[i]);
-			m_nPivotalAreasCount++;
+			m_nPivotalAreaCount++;
 		}
 	}
 	if (m_SidePathAreas.size() > 0)
@@ -735,7 +734,7 @@ bool DungeonGenerator::assignAreasType()
 		{
 			m_SidePathAreas[i]->setAreaType(EAreaTypeEnum::ATE_Pivotal);
 			m_PivotalAreas.push_back(m_SidePathAreas[i]);
-			m_nPivotalAreasCount++;
+			m_nPivotalAreaCount++;
 		}
 	}
 	if (m_BranchPathAreas.size() > 0)
@@ -745,7 +744,7 @@ bool DungeonGenerator::assignAreasType()
 		{
 			m_BranchPathAreas[i]->setAreaType(EAreaTypeEnum::ATE_Pivotal);
 			m_PivotalAreas.push_back(m_BranchPathAreas[i]);
-			m_nPivotalAreasCount++;
+			m_nPivotalAreaCount++;
 		}
 	}
 	if (m_SecondaryPathAreas.size() > 0)

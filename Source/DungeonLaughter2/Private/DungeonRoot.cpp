@@ -4,6 +4,7 @@
 #include "DungeonRoot.h"
 #include "../Private/DungeonGenerator.h"
 #include "../Private/AlisaMethod.h"
+#include "DL2_HUD.h"
 // Sets default values
 ADungeonRoot::ADungeonRoot()
 {
@@ -73,6 +74,7 @@ void ADungeonRoot::GenerateDungeon2dData()
 		return;
 	if(!DungeonGenerator::getInstance()->generateDungeon(m_pCurrentDungeonNode->m_Map))
 		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon failed!"));
+	m_pCurrentDungeonNode->copyStatisticsData();
 }
 bool ADungeonRoot::generateRandomDungeonTree()
 {
@@ -154,7 +156,7 @@ bool ADungeonRoot::generateRandomDungeonTree()
 			m_pDungeonRoot->SecondaryAreaRatio = FMath::RandRange(0.0f, 0.1f);
 		}
 		m_pDungeonRoot->MinSplitAreaSize = FMath::RandRange(RandomMinSplitAreaSize, RandomMaxSplitAreaSize);
-		m_pDungeonRoot->MaxSplitAreaSize = FMath::RandRange(m_pDungeonRoot->MinSplitAreaSize, RandomMaxSplitAreaSize);
+		m_pDungeonRoot->MaxSplitAreaSize = FMath::RandRange(FMath::Max(m_pDungeonRoot->MinSplitAreaSize, 8), RandomMaxSplitAreaSize);
 		m_pDungeonRoot->MinAreaSize = FMath::Max(m_pDungeonRoot->MinAreaSize, FMath::RandRange(m_pDungeonRoot->MinAreaSize, (m_pDungeonRoot->MinSplitAreaSize - 1)/2));
 		m_pDungeonRoot->MinSpecialAreaSize = FMath::Min(m_pDungeonRoot->MinAreaSize + 1, m_pDungeonRoot->MinSplitAreaSize);
 
@@ -187,7 +189,7 @@ bool ADungeonRoot::generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent,
 	{
 		parrent->m_pLeftNode->m_pParentNode = parrent;
 		AddComponent(TEXT("UDungeonNodeComponent"), false, FTransform::Identity, parrent->m_pLeftNode);
-		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.6f, 0.3f, 0.1f);
+		std::shared_ptr<AlisaMethod> am = (nodeDepth == maxDepth) ? AlisaMethod::create(0.7f, 0.3f) : AlisaMethod::create(0.6f, 0.3f, 0.1f);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pLeftNode->DungeonStyle = (EDungeonStyle)index;
 		am = AlisaMethod::create(0.05f*nodeDepth, 1.0f - 0.05f*nodeDepth);
@@ -227,7 +229,7 @@ bool ADungeonRoot::generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent,
 		parrent->m_pLeftNode->SecondaryAreaRatio = FMath::RandRange(FMath::Max(0.1f*parrent->NodeDepth, 0.0f), FMath::Min(0.1f*nodeDepth, 0.5f));
 	}
 	parrent->m_pLeftNode->MinSplitAreaSize = FMath::RandRange(RandomMinSplitAreaSize, RandomMaxSplitAreaSize);
-	parrent->m_pLeftNode->MaxSplitAreaSize = FMath::RandRange(parrent->m_pLeftNode->MinSplitAreaSize, RandomMaxSplitAreaSize);
+	parrent->m_pLeftNode->MaxSplitAreaSize = FMath::RandRange(FMath::Max(parrent->m_pLeftNode->MinSplitAreaSize, 8), RandomMaxSplitAreaSize);
 	parrent->m_pLeftNode->MinAreaSize = FMath::Max(parrent->m_pLeftNode->MinAreaSize, FMath::RandRange(parrent->m_pLeftNode->MinAreaSize, (parrent->m_pLeftNode->MinSplitAreaSize - 1) / 2));
 	parrent->m_pLeftNode->MinSpecialAreaSize = FMath::Min(parrent->m_pLeftNode->MinAreaSize + 1, parrent->m_pLeftNode->MinSplitAreaSize);
 	parrent->m_pLeftNode->NodeDepth = nodeDepth;
@@ -263,7 +265,7 @@ bool ADungeonRoot::generateRightRandomDungeonNode(UDungeonNodeComponent* parrent
 	{
 		parrent->m_pRightNode->m_pParentNode = parrent;
 		AddComponent(TEXT("UDungeonNodeComponent"), false, FTransform::Identity, parrent->m_pRightNode);
-		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.6f, 0.3f, 0.1f);
+		std::shared_ptr<AlisaMethod> am = (nodeDepth == maxDepth) ? AlisaMethod::create(0.7f, 0.3f) : AlisaMethod::create(0.6f, 0.3f, 0.1f);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pRightNode->DungeonStyle = (EDungeonStyle)index;
 	}
@@ -298,7 +300,7 @@ bool ADungeonRoot::generateRightRandomDungeonNode(UDungeonNodeComponent* parrent
 		parrent->m_pRightNode->SecondaryAreaRatio = FMath::RandRange(FMath::Max(0.1f*parrent->NodeDepth, 0.0f), FMath::Min(0.1f*nodeDepth, 0.5f));
 	}
 	parrent->m_pRightNode->MinSplitAreaSize = FMath::RandRange(RandomMinSplitAreaSize, RandomMaxSplitAreaSize);
-	parrent->m_pRightNode->MaxSplitAreaSize = FMath::RandRange(parrent->m_pRightNode->MinSplitAreaSize, RandomMaxSplitAreaSize);
+	parrent->m_pRightNode->MaxSplitAreaSize = FMath::RandRange(FMath::Max(parrent->m_pRightNode->MinSplitAreaSize, 8), RandomMaxSplitAreaSize);
 	parrent->m_pRightNode->MinAreaSize = FMath::Max(parrent->m_pRightNode->MinAreaSize, FMath::RandRange(parrent->m_pRightNode->MinAreaSize, (parrent->m_pRightNode->MinSplitAreaSize - 1) / 2));
 	parrent->m_pRightNode->MinSpecialAreaSize = FMath::Min(parrent->m_pRightNode->MinAreaSize + 1, parrent->m_pRightNode->MinSplitAreaSize);
 	parrent->m_pRightNode->NodeDepth = nodeDepth;
@@ -370,7 +372,30 @@ bool ADungeonRoot::enterDungeon()
 	if (m_pCurrentDungeonNode->Regenerate)
 		m_pCurrentDungeonNode->m_Map.clear();
 	if (m_pCurrentDungeonNode->m_Map.empty())
+	{
 		GenerateDungeon2dData();
+#if WITH_EDITOR
+		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+		if (playerController)
+		{
+			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			if (hud)
+				hud->EnableSteps();
+		}
+#endif // WITH_EDITOR
+	}
+	else
+	{
+#if WITH_EDITOR
+		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+		if (playerController)
+		{
+			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			if (hud)
+				hud->DisableSteps();
+		}
+#endif // WITH_EDITOR
+	}
 	return true;
 }
 
@@ -389,7 +414,30 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 		if (m_pCurrentDungeonNode->Regenerate)
 			m_pCurrentDungeonNode->m_Map.clear();
 		if (m_pCurrentDungeonNode->m_Map.empty())
+		{
 			GenerateDungeon2dData();
+#if WITH_EDITOR
+			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+			if (playerController)
+			{
+				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				if (hud)
+					hud->EnableSteps();
+			}
+#endif // WITH_EDITOR
+		}
+		else
+		{
+#if WITH_EDITOR
+			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+			if (playerController)
+			{
+				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				if (hud)
+					hud->DisableSteps();
+			}
+#endif // WITH_EDITOR
+		}
 	}
 	else
 	{
@@ -402,7 +450,30 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 		if (m_pCurrentDungeonNode->Regenerate)
 			m_pCurrentDungeonNode->m_Map.clear();
 		if (m_pCurrentDungeonNode->m_Map.empty())
+		{
 			GenerateDungeon2dData();
+#if WITH_EDITOR
+			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+			if (playerController)
+			{
+				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				if (hud)
+					hud->EnableSteps();
+			}
+#endif // WITH_EDITOR
+		}
+		else
+		{
+#if WITH_EDITOR
+			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+			if (playerController)
+			{
+				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				if (hud)
+					hud->DisableSteps();
+			}
+#endif // WITH_EDITOR
+		}
 	}
 	return true;
 }
@@ -418,7 +489,30 @@ bool ADungeonRoot::doUpstair(int& depth)
 
 	if (m_pCurrentDungeonNode->Regenerate)
 		m_pCurrentDungeonNode->m_Map.clear();
-	if(m_pCurrentDungeonNode->m_Map.empty())
+	if (m_pCurrentDungeonNode->m_Map.empty())
+	{
 		GenerateDungeon2dData();
+#if WITH_EDITOR
+		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+		if (playerController)
+		{
+			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			if (hud)
+				hud->EnableSteps();
+		}
+#endif // WITH_EDITOR
+	}
+	else
+	{
+#if WITH_EDITOR
+		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
+		if (playerController)
+		{
+			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			if (hud)
+				hud->DisableSteps();
+		}
+#endif // WITH_EDITOR
+	}
 	return true;
 }

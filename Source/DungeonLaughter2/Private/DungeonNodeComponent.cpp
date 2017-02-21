@@ -38,6 +38,24 @@ UDungeonNodeComponent::UDungeonNodeComponent()
 	m_pLeftNode		= nullptr;		///main path
 	m_pRightNode	= nullptr;		///branch path
 	m_VisitedType	= EVisitedType::VTE_NO;
+
+	m_nEntranceAreaCount	= 0;
+	m_nExitAreaCount		= 0;
+	m_nBranchAreaCount		= 0;
+	m_nMainPathAreaCount	= 0;
+	m_nSidePathAreaCount	= 0;
+	m_nBranchPathAreaCount	= 0;
+	m_nSecondaryAreaCount	= 0;
+	m_nPivotalAreaCount		= 0;
+	m_nSpecialAreaCount		= 0;
+	m_nUnusualAreaCount		= 0;
+	m_nStandardAreaCount	= 0;
+	m_nPassageAreaCount		= 0;
+	m_nTunnelAreaCount		= 0;
+	m_nStandardDoorCount	= 0;
+	m_nLockedDoorCount		= 0;
+	m_nHiddenDoorCount		= 0;
+	m_nSpecialDoorCount		= 0;
 }
 
 
@@ -59,3 +77,38 @@ void UDungeonNodeComponent::TickComponent( float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
+void UDungeonNodeComponent::copyStatisticsData()
+{
+	Area* entranceArea = DungeonGenerator::getInstance()->getEntranceArea();
+	if (entranceArea)
+		m_nEntranceAreaCount = 1;
+	else
+		m_nEntranceAreaCount = 0;
+
+	Area* exitArea = DungeonGenerator::getInstance()->getExitArea();
+	if (exitArea)
+		m_nExitAreaCount = 1;
+	else
+		m_nExitAreaCount = 0;
+
+	Area* branchArea = DungeonGenerator::getInstance()->getBranchArea();
+	if (branchArea)
+		m_nBranchAreaCount = 1;
+	else
+		m_nBranchAreaCount = 0;
+
+	m_nMainPathAreaCount = DungeonGenerator::getInstance()->getMainPathAreaCount();
+	m_nSidePathAreaCount = DungeonGenerator::getInstance()->getSidePathAreaCount();
+	m_nBranchPathAreaCount = DungeonGenerator::getInstance()->getBranchPathAreaCount();
+	m_nSecondaryAreaCount = DungeonGenerator::getInstance()->getSecondaryAreaCount();
+	m_nPivotalAreaCount = DungeonGenerator::getInstance()->getPivotalAreaCount();
+	m_nSpecialAreaCount = DungeonGenerator::getInstance()->getSpecialAreaCount();
+	m_nUnusualAreaCount = DungeonGenerator::getInstance()->getUnusualAreaCount();
+	m_nStandardAreaCount = DungeonGenerator::getInstance()->getStandardAreaCount();
+	m_nPassageAreaCount = DungeonGenerator::getInstance()->getPassageAreaCount();
+	m_nTunnelAreaCount = DungeonGenerator::getInstance()->getTunnelAreaCount();
+	m_nStandardDoorCount = DungeonGenerator::getInstance()->getStandardDoorCount();
+	m_nLockedDoorCount = DungeonGenerator::getInstance()->getLockedDoorCount();
+	m_nHiddenDoorCount = DungeonGenerator::getInstance()->getHiddenDoorCount();
+	m_nSpecialDoorCount = DungeonGenerator::getInstance()->getSpecialDoorCount();
+}

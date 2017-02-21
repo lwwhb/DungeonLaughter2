@@ -23,7 +23,9 @@ class DUNGEONLAUGHTER2_API ADL2_HUD : public AHUD
 	virtual void DrawHUD() override;
 
 #if WITH_EDITOR
-	void reset();
+public:
+	void EnableSteps();
+	void DisableSteps();
 private:
 	void EnableStep1();
 	void EnableStep2();
@@ -54,6 +56,8 @@ private:
 	bool enableStep7;
 
 	int unit;
+
+	bool showSteps;
 
 	ADungeonRoot*	m_pDungeonRoot;
 #endif // WITH_EDITOR

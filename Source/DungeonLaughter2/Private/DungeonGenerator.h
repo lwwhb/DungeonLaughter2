@@ -67,13 +67,15 @@ public:
 	int getWidth() const { return m_nWidth; }
 	int getHeight() const { return m_nHeight; }
 	int getCellUnit() const { return m_nCellUnit; }
+	int getDisplayCellUnit() const { return m_nDisplayCellUnit; }
+	void setDisplayCellUnit(int unit) { m_nDisplayCellUnit = unit; }
 
 	///获取统计数据
-	int getMainPathAreasCount() const { return m_nMainPathAreasCount; }
-	int getSidePathAreasCount() const { return m_nSidePathAreasCount; }
-	int getBranchPathAreasCount() const { return m_nBranchPathAreasCount; }
-	int getSecondaryAreasCount() const { return m_nSecondaryAreasCount; }
-	int getPivotalAreasCount() const { return m_nPivotalAreasCount; }
+	int getMainPathAreaCount() const { return m_nMainPathAreaCount; }
+	int getSidePathAreaCount() const { return m_nSidePathAreaCount; }
+	int getBranchPathAreaCount() const { return m_nBranchPathAreaCount; }
+	int getSecondaryAreaCount() const { return m_nSecondaryAreaCount; }
+	int getPivotalAreaCount() const { return m_nPivotalAreaCount; }
 	int getSpecialAreaCount() const { return m_nSpecialAreaCount; }
 	int getUnusualAreaCount() const { return m_nUnusualAreaCount; }
 	int getStandardAreaCount() const { return m_nStandardAreaCount; }
@@ -131,6 +133,7 @@ private:
 	int		m_nWidth;			///地牢X方向大小
 	int		m_nHeight;			///地牢Y方向大小
 	int		m_nCellUnit;		///地牢Cell单位大小
+	int		m_nDisplayCellUnit;	///用于显示的Cell单位大小
 
 	int		m_nMinSplitAreaSize; ///最小分割区域大小
 	int		m_nMaxSplitAreaSize; ///最大分割区域大小
@@ -138,12 +141,12 @@ private:
 	int		m_nMinSpecialAreaSize;	///最小特殊区域大小
 
 	///统计数据
-	int		m_nMainPathAreasCount;	///主路径区域数
-	int		m_nSidePathAreasCount;  ///辅路径区域数
-	int		m_nBranchPathAreasCount;///分支路径区域数
-	int		m_nSecondaryAreasCount;	///次要区域数
+	int		m_nMainPathAreaCount;	///主路径区域数
+	int		m_nSidePathAreaCount;  ///辅路径区域数
+	int		m_nBranchPathAreaCount;///分支路径区域数
+	int		m_nSecondaryAreaCount;	///次要区域数
 
-	int		m_nPivotalAreasCount;	///关键区域计数器
+	int		m_nPivotalAreaCount;	///关键区域计数器
 	int		m_nSpecialAreaCount;	///特殊区域计数器
 	int		m_nUnusualAreaCount;	///独特区域计数器
 	int		m_nStandardAreaCount;	///标准区域计数器

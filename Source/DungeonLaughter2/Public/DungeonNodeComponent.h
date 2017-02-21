@@ -70,10 +70,32 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void copyStatisticsData();
+
 	UDungeonNodeComponent* getParentNode() const { return m_pParentNode; }
 	UDungeonNodeComponent* getLeftNode() const { return m_pLeftNode; }
 	UDungeonNodeComponent* getRightNode() const { return m_pRightNode; }
 	EVisitedType getVisitedType() const { return m_VisitedType; }
+
+	std::vector<Cell>& getMap() { return m_Map; }
+
+	int getEntranceAreaCount() const { return m_nEntranceAreaCount; }
+	int getExitAreaCount() const { return m_nExitAreaCount; }
+	int getBranchAreaCount() const { return m_nBranchAreaCount; }
+	int getMainPathAreaCount() const { return m_nMainPathAreaCount; }
+	int getSidePathAreaCount() const { return m_nSidePathAreaCount; }
+	int getBranchPathAreaCount() const { return m_nBranchPathAreaCount; }
+	int getSecondaryAreaCount() const { return m_nSecondaryAreaCount; }
+	int getPivotalAreaCount() const { return m_nPivotalAreaCount; }
+	int getSpecialAreaCount() const { return m_nSpecialAreaCount; }
+	int getUnusualAreaCount() const { return m_nUnusualAreaCount; }
+	int getStandardAreaCount() const { return m_nStandardAreaCount; }
+	int getPassageAreaCount() const { return m_nPassageAreaCount; }
+	int getTunnelAreaCount() const { return m_nTunnelAreaCount; }
+	int getStandardDoorCount() const { return m_nStandardDoorCount; }
+	int getLockedDoorCount() const { return m_nLockedDoorCount; }
+	int getHiddenDoorCount() const { return m_nHiddenDoorCount; }
+	int getSpecialDoorCount() const { return m_nSpecialDoorCount; }
 private:
 	UDungeonNodeComponent*	m_pParentNode;		///¸¸½Úµã
 	UDungeonNodeComponent*	m_pLeftNode;		///main path
@@ -81,4 +103,22 @@ private:
 	EVisitedType			m_VisitedType;
 
 	std::vector<Cell>	m_Map;
+
+	int		m_nEntranceAreaCount;
+	int		m_nExitAreaCount;
+	int		m_nBranchAreaCount;
+	int		m_nMainPathAreaCount;
+	int		m_nSidePathAreaCount;
+	int		m_nBranchPathAreaCount;
+	int		m_nSecondaryAreaCount;
+	int		m_nPivotalAreaCount;
+	int		m_nSpecialAreaCount;
+	int		m_nUnusualAreaCount;
+	int		m_nStandardAreaCount;
+	int		m_nPassageAreaCount;
+	int		m_nTunnelAreaCount;
+	int		m_nStandardDoorCount;
+	int		m_nLockedDoorCount;
+	int		m_nHiddenDoorCount;
+	int		m_nSpecialDoorCount;
 };

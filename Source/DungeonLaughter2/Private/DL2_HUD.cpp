@@ -16,11 +16,8 @@ void ADL2_HUD::BeginPlay()
 	Super::BeginPlay();
 
 #if WITH_EDITOR
-	reset();
-	unit = DungeonGenerator::getInstance()->getCellUnit();
-	enableStep1 = enableStep2 = enableStep3 = enableStep4 = enableStep5 = enableStep6 = enableStep7 = false;
-	GetWorldTimerManager().SetTimer(m_TimerHandle, this, &ADL2_HUD::EnableStep1, 1.0f, false);
-
+	EnableSteps();
+	unit = DungeonGenerator::getInstance()->getDisplayCellUnit();
 	UWorld* world = GetWorld();
 	if (world)
 	{
@@ -34,21 +31,34 @@ void ADL2_HUD::DrawHUD()
 {
 	Super::DrawHUD();
 #if WITH_EDITOR
-	if (enableStep1 && !enableStep7)
+	if (!m_pDungeonRoot || !m_pDungeonRoot->getCurrentDungeonNode())
+		return;
+
+	unit = DungeonGenerator::getInstance()->getDisplayCellUnit();
+	if (showSteps)
 	{
-		if (enableStep4)
-			DrawConnectAreas();
-		else
-			DrawBackground();
+		if (enableStep1 && !enableStep7)
+		{
+			if (enableStep4)
+				DrawConnectAreas();
+			else
+				DrawBackground();
+		}
+		if (enableStep3 && !enableStep7)
+			DrawEntranceAreaAndExitArea();
+		if (enableStep2 && !enableStep7)
+			DrawSplitLines();
+		if (enableStep7)
+			DrawFinalMap();
+		if (enableStep1)
+		{
+			DrawStatistics();
+			DrawDungeonTreeInfo();
+		}
 	}
-	if (enableStep3 && !enableStep7)
-		DrawEntranceAreaAndExitArea();
-	if (enableStep2 && !enableStep7)
-		DrawSplitLines();
-	if (enableStep7)
-		DrawFinalMap();
-	if (enableStep1)
+	else
 	{
+		DrawFinalMap();
 		DrawStatistics();
 		DrawDungeonTreeInfo();
 	}
@@ -57,8 +67,9 @@ void ADL2_HUD::DrawHUD()
 
 #if WITH_EDITOR
 
-void ADL2_HUD::reset()
+void ADL2_HUD::EnableSteps()
 {
+	showSteps = true;
 	enableStep1 = false;
 	enableStep2 = false;
 	enableStep3 = false;
@@ -66,6 +77,11 @@ void ADL2_HUD::reset()
 	enableStep5 = false;
 	enableStep6 = false;
 	enableStep7 = false;
+	GetWorldTimerManager().SetTimer(m_TimerHandle, this, &ADL2_HUD::EnableStep1, 1.0f, false);
+}
+void ADL2_HUD::DisableSteps()
+{
+	showSteps = false;
 }
 void ADL2_HUD::EnableStep1() 
 { 
@@ -230,9 +246,11 @@ void ADL2_HUD::DrawEntranceAreaAndExitArea()
 }
 void ADL2_HUD::DrawFinalMap()
 {
-	for (size_t i = 0; i < DungeonGenerator::getInstance()->getMap().size(); i++)
+	if (!m_pDungeonRoot || !m_pDungeonRoot->getCurrentDungeonNode())
+		return;
+	for (size_t i = 0; i < m_pDungeonRoot->getCurrentDungeonNode()->getMap().size(); i++)
 	{
-		Cell cell = DungeonGenerator::getInstance()->getMap()[i];
+		Cell cell = m_pDungeonRoot->getCurrentDungeonNode()->getMap()[i];
 		if (cell.getCellType() < ECellTypeEnum::CTE_Wall)
 		{
 			switch (cell.getAreaType())
@@ -317,70 +335,63 @@ void ADL2_HUD::DrawFinalMap()
 }
 void ADL2_HUD::DrawStatistics()
 {
-	int width = DungeonGenerator::getInstance()->getWidth();
-	int height = DungeonGenerator::getInstance()->getHeight();
+	if (!m_pDungeonRoot || !m_pDungeonRoot->getCurrentDungeonNode())
+		return;
+	int width = m_pDungeonRoot->getCurrentDungeonNode()->CellCountX + 1;
+	int height = m_pDungeonRoot->getCurrentDungeonNode()->CellCountY + 1;
 
 	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EDungeonStyle"), true);
 	if (!EnumPtr) 
 		return ;
-	FString text = "Dungeon Style : " + EnumPtr->GetEnumName((int32)DungeonGenerator::getInstance()->getDungeonStyle());
+	FString text = "Dungeon Style : " + EnumPtr->GetEnumName((int32)m_pDungeonRoot->getCurrentDungeonNode()->DungeonStyle);
 	DrawText(text, FLinearColor(FColor::White), (width + 2)*unit, unit, nullptr, 2.0f);
 
-	Area* entranceArea = DungeonGenerator::getInstance()->getEntranceArea();
-	if (entranceArea)
-		DrawText("Entrance Area count : 1", FLinearColor::Red, (width + 2)*unit, unit*5);
-	else
-		DrawText("Entrance Area count : 0", FLinearColor::Red, (width + 2)*unit, unit*5);
+	text = "Entrance Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getEntranceAreaCount());
+	DrawText(text, FLinearColor::Red, (width + 2)*unit, unit*5);
 
-	Area* exitArea = DungeonGenerator::getInstance()->getExitArea();
-	if (exitArea)
-		DrawText("Exit Area count : 1", FLinearColor::Green, (width + 2)*unit, unit*7);
-	else
-		DrawText("Exit Area count : 0", FLinearColor::Green, (width + 2)*unit, unit*7);
+	text = "Exit Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getExitAreaCount());
+	DrawText(text, FLinearColor::Green, (width + 2)*unit, unit*7);
 
-	Area* branchArea = DungeonGenerator::getInstance()->getBranchArea();
-	if (branchArea)
-		DrawText("Branch Area count : 1", FLinearColor::Yellow, (width + 2)*unit, unit * 9);
-	else
-		DrawText("Branch Area count : 0", FLinearColor::Yellow, (width + 2)*unit, unit * 9);
+	text = "Branch Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getBranchAreaCount());
+	DrawText(text, FLinearColor::Yellow, (width + 2)*unit, unit * 9);
 
-	text = "Main Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getMainPathAreasCount());
+	text = "Main Path Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getMainPathAreaCount());
 	DrawText(text, FLinearColor(FColor::Orange), (width + 2)*unit, unit * 11);
 
-	text = "Side Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSidePathAreasCount());
+	text = "Side Path Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getSidePathAreaCount());
 	DrawText(text, FLinearColor(FColor::Turquoise), (width + 2)*unit, unit * 13);
 
-	text = "Branch Path Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getBranchPathAreasCount());
+	text = "Branch Path Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getBranchPathAreaCount());
 	DrawText(text, FLinearColor(FColor::Cyan), (width + 2)*unit, unit * 15);
 
-	text = "Secondary Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSecondaryAreasCount());
+	text = "Secondary Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getSecondaryAreaCount());
 	DrawText(text, FLinearColor::Black, (width + 2)*unit, unit * 17);
 
-	text = "Pivotal Area Count : " + FString::FromInt(DungeonGenerator::getInstance()->getPivotalAreasCount());
+	text = "Pivotal Area Count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getPivotalAreaCount());
 	DrawText(text, FLinearColor(FColor::Blue), (width + 2)*unit, unit * 19);
 
-	text = "Special Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getSpecialAreaCount());
+	text = "Special Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getSpecialAreaCount());
 	DrawText(text, FLinearColor(FColor::Magenta), (width + 2)*unit, unit * 21);
 
-	text = "Unusual Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getUnusualAreaCount());
+	text = "Unusual Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getUnusualAreaCount());
 	DrawText(text, FLinearColor(FColor::Purple), (width + 2)*unit, unit * 23);
 
-	text = "Standard Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getStandardAreaCount());
+	text = "Standard Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getStandardAreaCount());
 	DrawText(text, FLinearColor(FColor::White), (width + 2)*unit, unit * 25);
 
-	text = "Passage Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getPassageAreaCount());
+	text = "Passage Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getPassageAreaCount());
 	DrawText(text, FLinearColor(FColor::White), (width + 2)*unit, unit * 27);
 
-	text = "Tunnel Area count : " + FString::FromInt(DungeonGenerator::getInstance()->getTunnelAreaCount());
+	text = "Tunnel Area count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getTunnelAreaCount());
 	DrawText(text, FLinearColor(FColor::White), (width + 2)*unit, unit * 29);
 
-	text = "Standard Door count : " + FString::FromInt(DungeonGenerator::getInstance()->getStandardDoorCount());
+	text = "Standard Door count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getStandardDoorCount());
 	DrawText(text, FLinearColor::Blue, (width + 2)*unit, unit * 31);
-	text = "Locked Door count : " + FString::FromInt(DungeonGenerator::getInstance()->getLockedDoorCount());
+	text = "Locked Door count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getLockedDoorCount());
 	DrawText(text, FLinearColor::Red, (width + 2)*unit, unit * 33);
-	text = "Hidden Door count : " + FString::FromInt(DungeonGenerator::getInstance()->getHiddenDoorCount());
+	text = "Hidden Door count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getHiddenDoorCount());
 	DrawText(text, FLinearColor(0.2f, 0.2f, 0.2f, 1.0f), (width + 2)*unit, unit * 35);
-	text = "Special Door count : " + FString::FromInt(DungeonGenerator::getInstance()->getSpecialDoorCount());
+	text = "Special Door count : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->getSpecialDoorCount());
 	DrawText(text, FLinearColor(FColor::Magenta), (width + 2)*unit, unit * 37);
 }
 void ADL2_HUD::DrawCircle(const FVector2D& Center, const FColor& Color, int32 NumSides, float Radius)
@@ -419,10 +430,10 @@ void ADL2_HUD::DrawDungeonNode(UDungeonNodeComponent* node, const FVector2D& Cen
 
 	if (node == m_pDungeonRoot->getCurrentDungeonNode())
 	{
-		DrawCircle(Center, FColor::Red, 20, 25);
+		DrawCircle(Center, FColor::Red, 20, 2.5f*unit);
 	}
 
-	DrawCircle(Center, color, 20, 20);
+	DrawCircle(Center, color, 20, 2*unit);
 
 	if(node->getLeftNode())
 		DrawDungeonNode(node->getLeftNode(), leftCenter);
@@ -434,26 +445,25 @@ void ADL2_HUD::DrawDungeonNode(UDungeonNodeComponent* node, const FVector2D& Cen
 }
 void ADL2_HUD::DrawDungeonTreeInfo()
 {
-	if (m_pDungeonRoot)
-	{	
-		FVector2D viewportSize;
-		GEngine->GameViewport->GetViewportSize(viewportSize);
-		int width = DungeonGenerator::getInstance()->getWidth();
-		int height = DungeonGenerator::getInstance()->getHeight();
+	if (!m_pDungeonRoot || !m_pDungeonRoot->getCurrentDungeonNode())
+		return;	
+	FVector2D viewportSize;
+	GEngine->GameViewport->GetViewportSize(viewportSize);
+	int width = m_pDungeonRoot->getCurrentDungeonNode()->CellCountX + 1;
+	int height = m_pDungeonRoot->getCurrentDungeonNode()->CellCountY + 1;
 
-		const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EDungeonType"), true);
-		if (!EnumPtr)
-			return;
-		FString text = "Dungeon Type : " + EnumPtr->GetEnumName((int32)m_pDungeonRoot->DungeonType);
-		DrawText(text, FLinearColor(FColor::White), (width + 2)*unit + viewportSize.X*0.35f, unit, nullptr, 2.0f);
+	const UEnum* EnumPtr = FindObject<UEnum>(ANY_PACKAGE, TEXT("EDungeonType"), true);
+	if (!EnumPtr)
+		return;
+	FString text = "Dungeon Type : " + EnumPtr->GetEnumName((int32)m_pDungeonRoot->DungeonType);
+	DrawText(text, FLinearColor(FColor::White), (width + 2)*unit + viewportSize.X*0.35f, unit, nullptr, 2.0f);
 
-		DrawText("Max Dungeon Depth : " + FString::FromInt(m_pDungeonRoot->MaxDungeonDepth), FLinearColor::Green, (width + 2)*unit + viewportSize.X*0.40f, unit * 5);
-		if (m_pDungeonRoot->getCurrentDungeonNode())
-			DrawText("Current Dungeon Depth : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->NodeDepth), FLinearColor::Yellow, (width + 2)*unit + viewportSize.X*0.40f, unit * 7);
+	DrawText("Max Dungeon Depth : " + FString::FromInt(m_pDungeonRoot->MaxDungeonDepth), FLinearColor::Green, (width + 2)*unit + viewportSize.X*0.40f, unit * 5);
+	if (m_pDungeonRoot->getCurrentDungeonNode())
+		DrawText("Current Dungeon Depth : " + FString::FromInt(m_pDungeonRoot->getCurrentDungeonNode()->NodeDepth), FLinearColor::Yellow, (width + 2)*unit + viewportSize.X*0.40f, unit * 7);
 
-		UDungeonNodeComponent* root = m_pDungeonRoot->getRootDungeonNode();
-		if (root)
-			DrawDungeonNode(root, FVector2D((width + 2)*unit + viewportSize.X*0.3f, unit * 8 * root->NodeDepth));
-	}
+	UDungeonNodeComponent* root = m_pDungeonRoot->getRootDungeonNode();
+	if (root)
+		DrawDungeonNode(root, FVector2D((width + 2)*unit + viewportSize.X*0.3f, unit * 8 * root->NodeDepth));
 }
 #endif // WITH_EDITOR
