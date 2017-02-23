@@ -5,6 +5,8 @@
 #include "../Private/DungeonGenerator.h"
 #include "../Private/AlisaMethod.h"
 #include "DL2_HUD.h"
+#include "TerrainTile.h"
+
 // Sets default values
 ADungeonRoot::ADungeonRoot()
 {
@@ -13,7 +15,7 @@ ADungeonRoot::ADungeonRoot()
 
 	DungeonType = EDungeonType::DTE_Sample;
 	MaxDungeonDepth = 1;
-	CellUnit = 10;
+	CellUnit = 100;
 	RandomGenerate = false;
 	RandomMinDungeonDepth = 1;
 	RandomMaxDungeonDepth = 5;
@@ -75,6 +77,8 @@ void ADungeonRoot::GenerateDungeon2dData()
 	if(!DungeonGenerator::getInstance()->generateDungeon(m_pCurrentDungeonNode->m_Map))
 		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon failed!"));
 	m_pCurrentDungeonNode->copyStatisticsData();
+	if(!buildMap())
+		UE_LOG(LogTemp, Fatal, TEXT("Build dungeon map failed!"));
 }
 bool ADungeonRoot::generateRandomDungeonTree()
 {
@@ -213,8 +217,8 @@ bool ADungeonRoot::generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent,
 	}
 	else if (RandomGenerateType == ERandomGenerateType::RGTE_ComplexityAscending)
 	{
-		parrent->m_pLeftNode->CellCountX = RandomMinCellCountX;
-		parrent->m_pLeftNode->CellCountY = RandomMinCellCountY;
+		parrent->m_pLeftNode->CellCountX = FMath::Min(RandomMinCellCountX + (int)((RandomMaxCellCountX - RandomMinCellCountX)*((float)(nodeDepth - 1) / (float)maxDepth)), RandomMaxCellCountX);
+		parrent->m_pLeftNode->CellCountY = FMath::Min(RandomMinCellCountY + (int)((RandomMaxCellCountY - RandomMinCellCountY)*((float)(nodeDepth - 1) / (float)maxDepth)), RandomMaxCellCountY);
 		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1f*nodeDepth, 1.0f - 0.1f*nodeDepth);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pLeftNode->UseDoublePath = (index == 0);
@@ -284,8 +288,8 @@ bool ADungeonRoot::generateRightRandomDungeonNode(UDungeonNodeComponent* parrent
 	}
 	else if (RandomGenerateType == ERandomGenerateType::RGTE_ComplexityAscending)
 	{
-		parrent->m_pRightNode->CellCountX = RandomMinCellCountX;
-		parrent->m_pRightNode->CellCountY = RandomMinCellCountY;
+		parrent->m_pRightNode->CellCountX = FMath::Min(RandomMinCellCountX + (int)((RandomMaxCellCountX - RandomMinCellCountX)*((float)(nodeDepth-1)/(float)maxDepth)), RandomMaxCellCountX);
+		parrent->m_pRightNode->CellCountY = FMath::Min(RandomMinCellCountY + (int)((RandomMaxCellCountY - RandomMinCellCountY)*((float)(nodeDepth - 1) / (float)maxDepth)), RandomMaxCellCountY);
 		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1f*nodeDepth, 1.0f - 0.1f*nodeDepth);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pRightNode->UseDoublePath = (index == 0);
@@ -513,6 +517,94 @@ bool ADungeonRoot::doUpstair(int& depth)
 				hud->DisableSteps();
 		}
 #endif // WITH_EDITOR
+	}
+	return true;
+}
+
+bool ADungeonRoot::buildMap()
+{
+	if (!m_pCurrentDungeonNode)
+		return false;
+
+	for (int i = 0; i < m_pCurrentDungeonNode->m_Map.size(); ++i)
+	{
+		if (!buildCell(m_pCurrentDungeonNode->m_Map[i]))
+		{
+			UE_LOG(LogTemp, Fatal, TEXT("Build cell %d failed!"), i);
+			return false;
+		}
+	}
+	
+	return true;
+}
+ATerrainTile* ADungeonRoot::findTerrianTileByCellType(ECellTypeEnum cellType)
+{
+	for (int i = 0; i < m_TerrainTileArray.Num(); ++i)
+	{
+		if (m_TerrainTileArray[i]->CellType == cellType)
+			return m_TerrainTileArray[i];
+	}
+	return nullptr;
+}
+bool ADungeonRoot::buildCell(const Cell& cell)
+{
+	UClass* classType = nullptr;
+	ATerrainTile* terrainTile = nullptr;
+	FActorSpawnParameters spawnParms;
+	spawnParms.Owner = this;
+	switch (cell.getCellType())
+	{
+	case ECellTypeEnum::CTE_EmptyCell:
+		break;
+	case ECellTypeEnum::CTE_StandardFloor:
+	case ECellTypeEnum::CTE_PassageFloor:
+	case ECellTypeEnum::CTE_TunnelFloor:
+	case ECellTypeEnum::CTE_StandardDoor:
+	case ECellTypeEnum::CTE_Entrance:
+	case ECellTypeEnum::CTE_Exit:
+	case ECellTypeEnum::CTE_BranchExit:
+	case ECellTypeEnum::CTE_LockedDoor:
+	case ECellTypeEnum::CTE_MissionLockedDoor:
+	case ECellTypeEnum::CTE_Barricade:
+	case ECellTypeEnum::CTE_BossTreasuryDoor:
+		terrainTile = findTerrianTileByCellType(ECellTypeEnum::CTE_StandardFloor);
+		if (!terrainTile)
+		{
+			classType = StandardFloorBlueprintsArray[0];
+			terrainTile = GetWorld()->SpawnActor<ATerrainTile>(classType, spawnParms);
+			if (!terrainTile)
+				return false;
+			terrainTile->CellType = cell.getCellType();
+			terrainTile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+			m_TerrainTileArray.Add(terrainTile);
+		}
+		break;
+	case ECellTypeEnum::CTE_StandardWall:
+	case ECellTypeEnum::CTE_PassageWall:
+	case ECellTypeEnum::CTE_HiddenDoor:
+		terrainTile = findTerrianTileByCellType(ECellTypeEnum::CTE_StandardWall);
+		if (!terrainTile)
+		{
+			classType = StandardWallBlueprintsArray[0];
+			terrainTile = GetWorld()->SpawnActor<ATerrainTile>(classType, spawnParms);
+			if (!terrainTile)
+				return false;
+			terrainTile->CellType = cell.getCellType();
+			terrainTile->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+			m_TerrainTileArray.Add(terrainTile);
+		}
+		break;
+	default:
+		break;
+	}
+
+	if (terrainTile)
+	{
+		FTransform transform;
+		transform.SetLocation((FVector(-cell.getIndexY()*CellUnit, cell.getIndexX()*CellUnit, 0)));
+		transform.SetScale3D(terrainTile->GetActorScale()*((float)CellUnit / 100.0f));
+		if (!terrainTile->addInstance(transform))
+			return false;
 	}
 	return true;
 }

@@ -8,7 +8,7 @@ Cell::Cell()
 	m_nIndexX		= -1;
 	m_nIndexY		= -1;
 	m_nDepthZ		= 0;
-	m_Type			= ECellTypeEnum::CTE_Empty;
+	m_Type			= ECellTypeEnum::CTE_EmptyCell;
 	m_AreaType		= EAreaTypeEnum::ATE_Unknown;
 	m_AreaTypeMask	= EAreaTypeMaskEnum::ATME_Unknown;
 	m_Direct		= EDirectEnum::DE_Unknown;

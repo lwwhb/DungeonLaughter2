@@ -6,8 +6,7 @@
 #include "DungeonNodeComponent.h"
 #include "DungeonRoot.generated.h"
 
-
-
+class ATerrainTile;
 UENUM(BlueprintType)
 enum class ERandomGenerateType : uint8
 {
@@ -71,6 +70,52 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "RandomGenerate", meta = (ClampMin = 8, ClampMax = 16, EditCondition = "RandomGenerate", ShortTooltip = "Random split area size max value."))
 	int RandomMaxSplitAreaSize;
 
+	///TerrainTile
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Empty cell blueprints array."))
+	TArray<UClass*> EmptyCellBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Standard floor blueprints array."))
+	TArray<UClass*> StandardFloorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Passage floor blueprints array."))
+	TArray<UClass*> PassageFloorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Tunnel floor blueprints array."))
+	TArray<UClass*> TunnelFloorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Standard Wall blueprints array."))
+	TArray<UClass*> StandardWallBlueprintsArray;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Passage Wall blueprints array."))
+	TArray<UClass*> PassageWallBlueprintsArray;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Entrance blueprints array."))
+	TArray<UClass*> EntranceBlueprintsArray;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Exit blueprints array."))
+	TArray<UClass*> ExitBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Branch Exit blueprints array."))
+	TArray<UClass*> BranchExitBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Standard door blueprints array."))
+	TArray<UClass*> StandardDoorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Locked door blueprints array."))
+	TArray<UClass*> LockedDoorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Hidden door blueprints array."))
+	TArray<UClass*> HiddenDoorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Mission locked door blueprints array."))
+	TArray<UClass*> MissionLockedDoorBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Barricade blueprints array."))
+	TArray<UClass*> BarricadeBlueprintsArray;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "CellConfig", meta = (ShortTooltip = "Boss treasury door blueprints array."))
+	TArray<UClass*> BossTreasuryDoorBlueprintsArray;
+	///
 	// 蓝图逻辑调用部分 
 	UFUNCTION(BlueprintCallable, Category = "Dungeon")
 	bool generateRandomDungeonTree();
@@ -100,6 +145,9 @@ private:
 	bool generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
 	bool generateRightRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
 	void GenerateDungeon2dData();
+	bool buildMap();
+	ATerrainTile* findTerrianTileByCellType(ECellTypeEnum cellType);
+	bool buildCell(const Cell& cell);
 private:
 	UDungeonNodeComponent*	m_pDungeonRoot;
 	UDungeonNodeComponent*	m_pCurrentDungeonNode;
@@ -108,4 +156,6 @@ private:
 	FString			m_strBossDungeonName;
 	FString			m_strBranchDungeonName;
 	FString			m_strBranchBossDungeonName;
+
+	TArray<ATerrainTile*>	m_TerrainTileArray;
 };

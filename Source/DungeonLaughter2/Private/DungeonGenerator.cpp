@@ -86,7 +86,7 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 	m_nWidth = width + 1;
 	m_nHeight = height + 1;
 	m_nCellUnit = cellUnit;
-	m_nDisplayCellUnit = m_nCellUnit;
+	m_nDisplayCellUnit = 10;
 	m_nMinSplitAreaSize = minSplitAreaSize;
 	m_nMaxSplitAreaSize = maxSplitAreaSize;
 	m_nMinAreaSize = minAreaSize;				///最小区域大小
@@ -183,7 +183,7 @@ void DungeonGenerator::wrapCellByCellType(int x, int y, int width, int height, E
 			{
 				for (int n : getNeighbours8()) {
 					int cell = j + n;
-					if (m_Map[cell].getCellType() == ECellTypeEnum::CTE_Empty)
+					if (m_Map[cell].getCellType() == ECellTypeEnum::CTE_EmptyCell)
 					{
 						m_Map[cell].setCellType(withCellType);
 						m_Map[cell].setAreaType(areaType);

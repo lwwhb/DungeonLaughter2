@@ -111,7 +111,7 @@ FBox2D Area::getIntersectRect(Area* other)
 
 bool Area::generateStandardArea()
 {
-	generateCells(ECellTypeEnum::CTE_Wall);
+	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
@@ -290,7 +290,7 @@ bool Area::generateTunnelArea()
 }
 bool Area::generateEntranceArea()
 {
-	generateCells(ECellTypeEnum::CTE_Wall);
+	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
@@ -302,7 +302,7 @@ bool Area::generateEntranceArea()
 }
 bool Area::generateExitArea()
 {
-	generateCells(ECellTypeEnum::CTE_Wall);
+	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
@@ -314,7 +314,7 @@ bool Area::generateExitArea()
 }
 bool Area::generateBranchArea()
 {
-	generateCells(ECellTypeEnum::CTE_Wall);
+	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
@@ -326,7 +326,7 @@ bool Area::generateBranchArea()
 }
 bool Area::generatePivotalArea()
 {
-	generateCells(ECellTypeEnum::CTE_Wall);
+	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
@@ -338,7 +338,7 @@ bool Area::generatePivotalArea()
 }
 bool Area::generateSpecialArea()
 {
-	generateCells(ECellTypeEnum::CTE_Wall);
+	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;

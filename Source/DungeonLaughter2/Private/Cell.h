@@ -9,11 +9,11 @@
 UENUM(BlueprintType)
 enum class ECellTypeEnum : uint8
 {
-	CTE_Empty 				UMETA(DisplayName = "Empty"),
+	CTE_EmptyCell 			UMETA(DisplayName = "EmptyCell"),
 	CTE_StandardFloor 		UMETA(DisplayName = "StandardFloor"),
 	CTE_PassageFloor		UMETA(DisplayName = "PassageFloor"),
 	CTE_TunnelFloor			UMETA(DisplayName = "TunnelFloor"),
-	CTE_Wall				UMETA(DisplayName = "Wall"),
+	CTE_StandardWall		UMETA(DisplayName = "StandardWall"),
 	CTE_PassageWall			UMETA(DisplayName = "PassageWall"),
 	CTE_Entrance			UMETA(DisplayName = "Entrance"),
 	CTE_Exit				UMETA(DisplayName = "Exit"),
@@ -76,6 +76,9 @@ public:
 
 	int getIndexY() const { return m_nIndexY; }
 	void setIndexY(int indexY) { m_nIndexY = indexY; }
+
+	int getDepthZ() const { return m_nDepthZ; }
+	void setDepthZ(int depthZ) { m_nDepthZ = depthZ; }
 
 	ECellTypeEnum getCellType() const { return m_Type; }
 	void setCellType(ECellTypeEnum type) { m_Type = type; }

@@ -251,7 +251,7 @@ void ADL2_HUD::DrawFinalMap()
 	for (size_t i = 0; i < m_pDungeonRoot->getCurrentDungeonNode()->getMap().size(); i++)
 	{
 		Cell cell = m_pDungeonRoot->getCurrentDungeonNode()->getMap()[i];
-		if (cell.getCellType() < ECellTypeEnum::CTE_Wall)
+		if (cell.getCellType() < ECellTypeEnum::CTE_StandardWall)
 		{
 			switch (cell.getAreaType())
 			{
@@ -284,7 +284,7 @@ void ADL2_HUD::DrawFinalMap()
 				break;
 			}
 		}
-		else if(cell.getCellType() == ECellTypeEnum::CTE_Wall || cell.getCellType() == ECellTypeEnum::CTE_PassageWall)
+		else if(cell.getCellType() == ECellTypeEnum::CTE_StandardWall || cell.getCellType() == ECellTypeEnum::CTE_PassageWall)
 			DrawRect(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f), cell.getIndexX()*unit, cell.getIndexY()*unit, unit, unit);
 		else if (cell.getCellType() == ECellTypeEnum::CTE_Entrance)
 		{
