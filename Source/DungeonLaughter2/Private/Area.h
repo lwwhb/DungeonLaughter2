@@ -50,6 +50,7 @@ private:
 	void generateCells(int m, ECellTypeEnum cellType);
 	void generateCells(const FBox2D& rect, ECellTypeEnum cellType);
 	void wrapCellByCellType(ECellTypeEnum cellType, ECellTypeEnum withCellType);
+	void setRandomTerrainTile(int m, ECellTypeEnum cellType);
 
 	int xy2p(const FBox2D& rect, const FVector2D& pos);
 	FVector2D p2xy(const FBox2D& rect, int p);

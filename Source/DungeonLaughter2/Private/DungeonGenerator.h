@@ -37,7 +37,7 @@ public:
 	bool setGeneratorSetting(int width, int height, int cellUnit = 10,int minSplitAreaSize = 7, int maxSplitAreaSize = 9, int minAreaSize = 3, int minSpecialAreaSize = 4,
 		bool doublePath = false, bool branchPath = false, bool loopBranchPath = false, bool multiLayerBranchPath = false, bool isImpasse = false, float secondaryAreaRatio = 0.0f,
 		EDungeonStyle dungeonStyle = EDungeonStyle::DSE_Standard);
-	bool generateDungeon(std::vector<Cell>& map);
+	bool generateDungeon2dData(std::vector<Cell>& map);
 	void generateCells(int x, int y, int width, int height, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 	void setCellType(int posX, int posY, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 	void setCellAreaType(int x, int y, int width, int height, EAreaTypeEnum areaType);

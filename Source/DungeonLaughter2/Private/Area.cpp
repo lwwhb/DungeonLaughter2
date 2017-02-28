@@ -297,7 +297,7 @@ bool Area::generateEntranceArea()
 		if (door)
 			door->setDoorType(EDoorTypeEnum::DTE_Standard);
 	}
-	//setRandomTerrainTile(level, 2, TerrainTile::TT_ENTRANCE);
+	setRandomTerrainTile(2, ECellTypeEnum::CTE_Entrance);
 	return true;
 }
 bool Area::generateExitArea()
@@ -393,6 +393,17 @@ void Area::wrapCellByCellType(ECellTypeEnum cellType, ECellTypeEnum withCellType
 	int h = m_Rect.GetSize().Y + 1;
 
 	DungeonGenerator::getInstance()->wrapCellByCellType(x, y, w, h, cellType, withCellType, m_AreaType, m_AreaTypeMask);
+}
+void Area::setRandomTerrainTile(int m, ECellTypeEnum cellType)
+{
+	int left = m_Rect.Min.X + m;
+	int right = m_Rect.Max.X - m;
+	int bottom = m_Rect.Min.Y + m;
+	int top = m_Rect.Max.Y - m;
+	int x = FMath::RandRange(FMath::Min(left, right), FMath::Max(left, right));
+	int y = FMath::RandRange(FMath::Min(bottom, top), FMath::Max(bottom, top));
+
+	DungeonGenerator::getInstance()->setCellType(x, y, cellType, m_AreaType, m_AreaTypeMask);
 }
 int Area::xy2p(const FBox2D& rect, const FVector2D& pos)
 {

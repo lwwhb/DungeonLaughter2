@@ -7,6 +7,8 @@
 #include "DungeonRoot.generated.h"
 
 class ATerrainTile;
+class ADL2_PlayerStart;
+
 UENUM(BlueprintType)
 enum class ERandomGenerateType : uint8
 {
@@ -144,10 +146,12 @@ public:
 private:
 	bool generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
 	bool generateRightRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
-	void GenerateDungeon2dData();
+	bool generateDungeon();
 	bool buildMap();
+	bool rebuildNavigationMesh();
 	ATerrainTile* findTerrianTileByCellType(ECellTypeEnum cellType);
-	bool buildCell(const Cell& cell);
+	bool buildTerrainTile(const Cell& cell);
+	bool buildEntrance(const Cell& cell);
 private:
 	UDungeonNodeComponent*	m_pDungeonRoot;
 	UDungeonNodeComponent*	m_pCurrentDungeonNode;
@@ -158,4 +162,6 @@ private:
 	FString			m_strBranchBossDungeonName;
 
 	TArray<ATerrainTile*>	m_TerrainTileArray;
+
+	ADL2_PlayerStart*	m_pEntrance;
 };

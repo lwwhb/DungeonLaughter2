@@ -6,6 +6,8 @@
 #include "../Private/AlisaMethod.h"
 #include "DL2_HUD.h"
 #include "TerrainTile.h"
+#include "DL2_PlayerStart.h"
+#include "AI/Navigation/NavMeshBoundsVolume.h"
 
 // Sets default values
 ADungeonRoot::ADungeonRoot()
@@ -34,6 +36,8 @@ ADungeonRoot::ADungeonRoot()
 	m_strBossDungeonName		= "";
 	m_strBranchDungeonName		= "";
 	m_strBranchBossDungeonName	= "";
+
+	m_pEntrance = nullptr;
 }
 ADungeonRoot::~ADungeonRoot()
 {
@@ -51,12 +55,18 @@ void ADungeonRoot::Tick( float DeltaTime )
 
 }
 
-void ADungeonRoot::GenerateDungeon2dData()
+bool ADungeonRoot::generateDungeon()
 {
-	if(!m_pDungeonRoot)
+	if (!m_pDungeonRoot)
+	{
 		UE_LOG(LogTemp, Fatal, TEXT("Call initRootDungeonNode function first!"));
-	if(!m_pCurrentDungeonNode)
+		return false;
+	}
+	if (!m_pCurrentDungeonNode)
+	{
 		UE_LOG(LogTemp, Fatal, TEXT("Error! CurrentDungeonNode is null!"));
+		return false;
+	}
 	if (!DungeonGenerator::getInstance()->setGeneratorSetting(
 		m_pCurrentDungeonNode->CellCountX,
 		m_pCurrentDungeonNode->CellCountY,
@@ -72,13 +82,23 @@ void ADungeonRoot::GenerateDungeon2dData()
 		m_pCurrentDungeonNode->IsImpasse,
 		m_pCurrentDungeonNode->SecondaryAreaRatio,
 		m_pCurrentDungeonNode->DungeonStyle
-		))
-		return;
-	if(!DungeonGenerator::getInstance()->generateDungeon(m_pCurrentDungeonNode->m_Map))
-		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon failed!"));
+	))
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Set dungeon setting failed!"));
+		return false;
+	}
+	if (!DungeonGenerator::getInstance()->generateDungeon2dData(m_pCurrentDungeonNode->m_Map))
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon 2d data failed!"));
+		return false;
+	}
 	m_pCurrentDungeonNode->copyStatisticsData();
-	if(!buildMap())
+	if (!buildMap())
+	{
 		UE_LOG(LogTemp, Fatal, TEXT("Build dungeon map failed!"));
+		return false;
+	}
+	return true;
 }
 bool ADungeonRoot::generateRandomDungeonTree()
 {
@@ -377,7 +397,8 @@ bool ADungeonRoot::enterDungeon()
 		m_pCurrentDungeonNode->m_Map.clear();
 	if (m_pCurrentDungeonNode->m_Map.empty())
 	{
-		GenerateDungeon2dData();
+		if (!generateDungeon())
+			return false;
 #if WITH_EDITOR
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
@@ -419,7 +440,8 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 			m_pCurrentDungeonNode->m_Map.clear();
 		if (m_pCurrentDungeonNode->m_Map.empty())
 		{
-			GenerateDungeon2dData();
+			if (!generateDungeon())
+				return false;
 #if WITH_EDITOR
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
@@ -455,7 +477,8 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 			m_pCurrentDungeonNode->m_Map.clear();
 		if (m_pCurrentDungeonNode->m_Map.empty())
 		{
-			GenerateDungeon2dData();
+			if (!generateDungeon())
+				return false;
 #if WITH_EDITOR
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
@@ -495,7 +518,8 @@ bool ADungeonRoot::doUpstair(int& depth)
 		m_pCurrentDungeonNode->m_Map.clear();
 	if (m_pCurrentDungeonNode->m_Map.empty())
 	{
-		GenerateDungeon2dData();
+		if (!generateDungeon())
+			return false;
 #if WITH_EDITOR
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
@@ -528,13 +552,63 @@ bool ADungeonRoot::buildMap()
 
 	for (int i = 0; i < m_pCurrentDungeonNode->m_Map.size(); ++i)
 	{
-		if (!buildCell(m_pCurrentDungeonNode->m_Map[i]))
+		if (!buildTerrainTile(m_pCurrentDungeonNode->m_Map[i]))
 		{
-			UE_LOG(LogTemp, Fatal, TEXT("Build cell %d failed!"), i);
+			UE_LOG(LogTemp, Fatal, TEXT("Build terrain tile %d failed!"), i);
+			return false;
+		}
+		if (!buildEntrance(m_pCurrentDungeonNode->m_Map[i]))
+		{
+			UE_LOG(LogTemp, Fatal, TEXT("Build entrance terrain tile %d failed!"), i);
 			return false;
 		}
 	}
-	
+	if (!rebuildNavigationMesh())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Rebuild navigation mesh failed!"));
+		return false;
+	}
+	return true;
+}
+bool ADungeonRoot::rebuildNavigationMesh()
+{
+	if (!m_pCurrentDungeonNode)
+		return false;
+	ULevel* curLevel = GetWorld()->GetCurrentLevel();
+	if (!curLevel)
+		return false;
+	ANavMeshBoundsVolume* volume = nullptr;
+	for (AActor* actor : curLevel->Actors)
+	{
+		if (actor && actor->IsA(ANavMeshBoundsVolume::StaticClass()))
+		{
+			volume = Cast<ANavMeshBoundsVolume>(actor);
+			break;
+		}
+	}
+	if (!volume)
+		return false;
+	volume->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+	int width = m_pCurrentDungeonNode->CellCountX * CellUnit;
+	int height = m_pCurrentDungeonNode->CellCountY * CellUnit;
+	FVector min = FVector(-height*0.5f, -width*0.5f, -CellUnit * 5);
+	FVector max = FVector(height*0.5f, width*0.5f, CellUnit * 5);
+	FVector pos = FVector(-height*0.5f, width*0.5f, 0);
+	volume->GetBrushComponent()->Bounds = FBox(min, max).TransformBy(FTransform(pos));
+	GetWorld()->GetNavigationSystem()->OnNavigationBoundsUpdated(volume);
+	volume->GetRootComponent()->SetMobility(EComponentMobility::Static);
+
+	for (int i = 0; i < m_TerrainTileArray.Num(); ++i)
+	{
+		ATerrainTile* terrainTile = m_TerrainTileArray[i];
+		if (!terrainTile)
+			return false;
+		if (terrainTile->CellType == ECellTypeEnum::CTE_StandardWall || terrainTile->CellType == ECellTypeEnum::CTE_PassageWall)
+			continue;
+		terrainTile->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+		terrainTile->SetActorLocation(terrainTile->GetActorLocation() + FVector(0, 0, -CellUnit));
+		terrainTile->GetRootComponent()->SetMobility(EComponentMobility::Stationary);
+	}
 	return true;
 }
 ATerrainTile* ADungeonRoot::findTerrianTileByCellType(ECellTypeEnum cellType)
@@ -546,7 +620,7 @@ ATerrainTile* ADungeonRoot::findTerrianTileByCellType(ECellTypeEnum cellType)
 	}
 	return nullptr;
 }
-bool ADungeonRoot::buildCell(const Cell& cell)
+bool ADungeonRoot::buildTerrainTile(const Cell& cell)
 {
 	UClass* classType = nullptr;
 	ATerrainTile* terrainTile = nullptr;
@@ -605,6 +679,16 @@ bool ADungeonRoot::buildCell(const Cell& cell)
 		transform.SetScale3D(terrainTile->GetActorScale()*((float)CellUnit / 100.0f));
 		if (!terrainTile->addInstance(transform))
 			return false;
+	}
+	return true;
+}
+bool ADungeonRoot::buildEntrance(const Cell& cell)
+{
+	if (cell.getCellType() == ECellTypeEnum::CTE_Entrance)
+	{
+		APlayerController* localPlayerController = GetWorld()->GetFirstPlayerController();
+		if (localPlayerController)
+			localPlayerController->GetPawn()->SetActorLocation((FVector(-cell.getIndexY()*CellUnit, cell.getIndexX()*CellUnit, CellUnit)));
 	}
 	return true;
 }

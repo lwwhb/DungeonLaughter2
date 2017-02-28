@@ -288,6 +288,7 @@ void ADL2_HUD::DrawFinalMap()
 			DrawRect(FLinearColor(0.25f, 0.25f, 0.25f, 1.0f), cell.getIndexX()*unit, cell.getIndexY()*unit, unit, unit);
 		else if (cell.getCellType() == ECellTypeEnum::CTE_Entrance)
 		{
+			DrawRect(FLinearColor::Yellow, cell.getIndexX()*unit, cell.getIndexY()*unit, unit, unit);
 		}
 		else if (cell.getCellType() == ECellTypeEnum::CTE_Exit)
 		{
