@@ -70,6 +70,7 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	void copyAreaInfos();
 	void copyStatisticsData();
 
 	UDungeonNodeComponent* getParentNode() const { return m_pParentNode; }
@@ -102,7 +103,8 @@ private:
 	UDungeonNodeComponent*	m_pRightNode;		///branch path
 	EVisitedType			m_VisitedType;
 
-	std::vector<Cell>	m_Map;
+	std::vector<Cell>		m_Map;
+	std::vector<AreaInfo>	m_AreaInfos;
 
 	int		m_nEntranceAreaCount;
 	int		m_nExitAreaCount;

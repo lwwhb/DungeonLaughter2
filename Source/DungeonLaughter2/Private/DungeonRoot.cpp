@@ -92,6 +92,7 @@ bool ADungeonRoot::generateDungeon()
 		UE_LOG(LogTemp, Fatal, TEXT("Generate dungeon 2d data failed!"));
 		return false;
 	}
+	m_pCurrentDungeonNode->copyAreaInfos();
 	m_pCurrentDungeonNode->copyStatisticsData();
 	if (!buildMap())
 	{
@@ -411,6 +412,11 @@ bool ADungeonRoot::enterDungeon()
 	}
 	else
 	{
+		if (!buildMap())
+		{
+			UE_LOG(LogTemp, Fatal, TEXT("Build dungeon map failed!"));
+			return false;
+		}
 #if WITH_EDITOR
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
@@ -454,6 +460,11 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 		}
 		else
 		{
+			if (!buildMap())
+			{
+				UE_LOG(LogTemp, Fatal, TEXT("Build dungeon map failed!"));
+				return false;
+			}
 #if WITH_EDITOR
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
@@ -491,6 +502,11 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 		}
 		else
 		{
+			if (!buildMap())
+			{
+				UE_LOG(LogTemp, Fatal, TEXT("Build dungeon map failed!"));
+				return false;
+			}
 #if WITH_EDITOR
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
@@ -532,6 +548,11 @@ bool ADungeonRoot::doUpstair(int& depth)
 	}
 	else
 	{
+		if (!buildMap())
+		{
+			UE_LOG(LogTemp, Fatal, TEXT("Build dungeon map failed!"));
+			return false;
+		}
 #if WITH_EDITOR
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
@@ -549,6 +570,12 @@ bool ADungeonRoot::buildMap()
 {
 	if (!m_pCurrentDungeonNode)
 		return false;
+
+	if (!clearMap())
+	{
+		UE_LOG(LogTemp, Fatal, TEXT("Clear map failed!"));
+		return false;
+	}
 
 	for (int i = 0; i < m_pCurrentDungeonNode->m_Map.size(); ++i)
 	{
@@ -568,6 +595,17 @@ bool ADungeonRoot::buildMap()
 		UE_LOG(LogTemp, Fatal, TEXT("Rebuild navigation mesh failed!"));
 		return false;
 	}
+	return true;
+}
+bool ADungeonRoot::clearMap()
+{
+	for (int i = 0; i < m_TerrainTileArray.Num(); ++i)
+	{
+		if (!(GetWorld()->DestroyActor(m_TerrainTileArray[i])))
+			return false;
+	}
+	while (m_TerrainTileArray.Num() > 0)
+		m_TerrainTileArray.RemoveAt(0);
 	return true;
 }
 bool ADungeonRoot::rebuildNavigationMesh()

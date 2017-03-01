@@ -62,3 +62,27 @@ private:
 
 	std::unordered_map<Area*, Door*>    m_ConnectedAreas;
 };
+
+class AreaInfo
+{
+	friend class UDungeonNodeComponent;
+public:
+	AreaInfo();
+	~AreaInfo();
+
+	FBox2D getRect() const;
+	void setRect(const FBox2D& rect);
+
+	EAreaTypeEnum getAreaType() const;
+	void setAreaType(EAreaTypeEnum type);
+
+	EAreaTypeMaskEnum getAreaTypeMask() const;
+	void setAreaTypeMask(EAreaTypeMaskEnum mask);
+private:
+	FBox2D						m_Rect;
+
+	EAreaTypeEnum				m_AreaType;
+	EAreaTypeMaskEnum			m_AreaTypeMask;
+
+	std::vector<Door>			m_DoorInfos;
+};

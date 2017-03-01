@@ -148,6 +148,7 @@ private:
 	bool generateRightRandomDungeonNode(UDungeonNodeComponent* parrent, int maxDepth);
 	bool generateDungeon();
 	bool buildMap();
+	bool clearMap();
 	bool rebuildNavigationMesh();
 	ATerrainTile* findTerrianTileByCellType(ECellTypeEnum cellType);
 	bool buildTerrainTile(const Cell& cell);

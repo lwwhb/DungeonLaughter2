@@ -436,3 +436,37 @@ FVector2D Area::p2xy(const FBox2D& rect, int p)
 	else
 		return FVector2D(rect.Min.X + 1, rect.Max.Y - 1 - (p - (pasWidth * 2 + pasHeight)));
 }
+
+AreaInfo::AreaInfo()
+{
+	m_AreaType = EAreaTypeEnum::ATE_Unknown;
+	m_AreaTypeMask = EAreaTypeMaskEnum::ATME_Unknown;
+}
+AreaInfo::~AreaInfo()
+{
+}
+FBox2D AreaInfo::getRect() const
+{
+	return m_Rect;
+}
+void AreaInfo::setRect(const FBox2D& rect)
+{
+	m_Rect = rect;
+}
+
+EAreaTypeEnum AreaInfo::getAreaType() const
+{
+	return m_AreaType;
+}
+void AreaInfo::setAreaType(EAreaTypeEnum type)
+{
+	m_AreaType = type;
+}
+EAreaTypeMaskEnum AreaInfo::getAreaTypeMask() const
+{
+	return m_AreaTypeMask;
+}
+void AreaInfo::setAreaTypeMask(EAreaTypeMaskEnum mask)
+{
+	m_AreaTypeMask = mask;
+}

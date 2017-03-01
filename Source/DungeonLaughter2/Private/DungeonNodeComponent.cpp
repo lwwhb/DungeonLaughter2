@@ -76,7 +76,30 @@ void UDungeonNodeComponent::TickComponent( float DeltaTime, ELevelTick TickType,
 
 	// ...
 }
-
+void UDungeonNodeComponent::copyAreaInfos()
+{
+	m_AreaInfos.clear();
+	std::vector<Area*> connectedAreas = DungeonGenerator::getInstance()->getConnectedAreas();
+	for (size_t i = 0; i < connectedAreas.size(); i++)
+	{
+		Area* area = connectedAreas[i];
+		if (area)
+		{
+			AreaInfo areaInfo;
+			areaInfo.setRect(area->getRect());
+			areaInfo.setAreaType(area->getAreaType());
+			areaInfo.setAreaTypeMask(area->getAreaTypeMask());
+			std::unordered_map<Area*, Door*>  connectedNeigbourAreas = area->getConnectedAreas();
+			for (auto iter = connectedNeigbourAreas.begin(); iter != connectedNeigbourAreas.end(); iter++) {
+				Area* neigbourArea = iter->first;
+				Door* door = iter->second;
+				if (neigbourArea && door)
+					areaInfo.m_DoorInfos.push_back(*door);
+			}
+			m_AreaInfos.push_back(areaInfo);
+		}
+	}
+}
 void UDungeonNodeComponent::copyStatisticsData()
 {
 	Area* entranceArea = DungeonGenerator::getInstance()->getEntranceArea();
