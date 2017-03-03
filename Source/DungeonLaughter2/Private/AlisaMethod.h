@@ -10,16 +10,16 @@
 class AlisaMethod
 {
 public:
-	static std::shared_ptr<AlisaMethod> create(float percent1, ...);
-	static std::shared_ptr<AlisaMethod> createWithPercentArray(std::vector<float>& percentArray);
+	static std::shared_ptr<AlisaMethod> create(double percent1, ...);
+	static std::shared_ptr<AlisaMethod> createWithPercentArray(std::vector<double>& percentArray);
 
 	int getRandomIndex();
 	void printProbArray();
 	void printAlisaArray();
 protected:
-	bool initWithPercentVariableList(float percent1, va_list args);
-	bool initWithPercentArray(std::vector<float>& percentArray);
+	bool initWithPercentVariableList(double percent1, va_list args);
+	bool initWithPercentArray(std::vector<double>& percentArray);
 private:
-	std::vector<float>      m_probArray;
+	std::vector<double>      m_probArray;
 	std::vector<int>        m_alisaArray;
 };

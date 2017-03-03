@@ -135,10 +135,10 @@ bool ADungeonRoot::generateRandomDungeonTree()
 		AddComponent(TEXT("UDungeonNodeComponent"), false, FTransform::Identity, m_pDungeonRoot);
 		if (maxDepth == 1)
 		{
-			std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.7f, 0.3f);
+			std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.7, 0.3);
 			int index = am.get()->getRandomIndex();
 			m_pDungeonRoot->DungeonStyle = (EDungeonStyle)index;
-			am = AlisaMethod::create(0.05f, 0.95f);
+			am = AlisaMethod::create(0.05, 0.95);
 			index = am.get()->getRandomIndex();
 			m_pDungeonRoot->IsBossDungeonNode = (index == 0);
 			if(m_pDungeonRoot->IsBossDungeonNode)	//注意将来特殊boss层对是否死路单独处理
@@ -146,7 +146,7 @@ bool ADungeonRoot::generateRandomDungeonTree()
 		}
 		else
 		{
-			std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.6f, 0.3f, 0.1f);
+			std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.6, 0.3, 0.1);
 			int index = am.get()->getRandomIndex();
 			m_pDungeonRoot->DungeonStyle = (EDungeonStyle)index;
 		}
@@ -167,10 +167,10 @@ bool ADungeonRoot::generateRandomDungeonTree()
 		{
 			m_pDungeonRoot->CellCountX = RandomMinCellCountX;
 			m_pDungeonRoot->CellCountY = RandomMinCellCountY;
-			std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1f, 0.9f);
+			std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1, 0.9);
 			int index = am.get()->getRandomIndex();
 			m_pDungeonRoot->UseDoublePath = (index == 0);
-			am = AlisaMethod::create(0.1f, 0.9f);
+			am = AlisaMethod::create(0.1, 0.9);
 			index = am.get()->getRandomIndex();
 			m_pDungeonRoot->UseBranchExit = (index == 0);
 			if (m_pDungeonRoot->UseBranchExit)
@@ -214,10 +214,10 @@ bool ADungeonRoot::generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent,
 	{
 		parrent->m_pLeftNode->m_pParentNode = parrent;
 		AddComponent(TEXT("UDungeonNodeComponent"), false, FTransform::Identity, parrent->m_pLeftNode);
-		std::shared_ptr<AlisaMethod> am = (nodeDepth == maxDepth) ? AlisaMethod::create(0.7f, 0.3f) : AlisaMethod::create(0.6f, 0.3f, 0.1f);
+		std::shared_ptr<AlisaMethod> am = (nodeDepth == maxDepth) ? AlisaMethod::create(0.7, 0.3) : AlisaMethod::create(0.6, 0.3, 0.1);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pLeftNode->DungeonStyle = (EDungeonStyle)index;
-		am = AlisaMethod::create(0.05f*nodeDepth, 1.0f - 0.05f*nodeDepth);
+		am = AlisaMethod::create(0.05*nodeDepth, 1.0 - 0.05*nodeDepth);
 		index = am.get()->getRandomIndex();
 		parrent->m_pLeftNode->IsBossDungeonNode = (index == 0);
 		if (parrent->m_pLeftNode->IsBossDungeonNode)	//注意将来特殊boss层对是否死路单独处理
@@ -240,10 +240,10 @@ bool ADungeonRoot::generateLeftRandomDungeonNode(UDungeonNodeComponent* parrent,
 	{
 		parrent->m_pLeftNode->CellCountX = FMath::Min(RandomMinCellCountX + (int)((RandomMaxCellCountX - RandomMinCellCountX)*((float)(nodeDepth - 1) / (float)maxDepth)), RandomMaxCellCountX);
 		parrent->m_pLeftNode->CellCountY = FMath::Min(RandomMinCellCountY + (int)((RandomMaxCellCountY - RandomMinCellCountY)*((float)(nodeDepth - 1) / (float)maxDepth)), RandomMaxCellCountY);
-		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1f*nodeDepth, 1.0f - 0.1f*nodeDepth);
+		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1*nodeDepth, 1.0 - 0.1*nodeDepth);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pLeftNode->UseDoublePath = (index == 0);
-		am = AlisaMethod::create(0.1f*nodeDepth, 1.0f - 0.1f*nodeDepth);
+		am = AlisaMethod::create(0.1*nodeDepth, 1.0 - 0.1*nodeDepth);
 		index = am.get()->getRandomIndex();
 		parrent->m_pLeftNode->UseBranchExit = (index == 0);
 		if (parrent->m_pLeftNode->UseBranchExit)
@@ -290,7 +290,7 @@ bool ADungeonRoot::generateRightRandomDungeonNode(UDungeonNodeComponent* parrent
 	{
 		parrent->m_pRightNode->m_pParentNode = parrent;
 		AddComponent(TEXT("UDungeonNodeComponent"), false, FTransform::Identity, parrent->m_pRightNode);
-		std::shared_ptr<AlisaMethod> am = (nodeDepth == maxDepth) ? AlisaMethod::create(0.7f, 0.3f) : AlisaMethod::create(0.6f, 0.3f, 0.1f);
+		std::shared_ptr<AlisaMethod> am = (nodeDepth == maxDepth) ? AlisaMethod::create(0.7, 0.3) : AlisaMethod::create(0.6, 0.3, 0.1);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pRightNode->DungeonStyle = (EDungeonStyle)index;
 	}
@@ -311,10 +311,10 @@ bool ADungeonRoot::generateRightRandomDungeonNode(UDungeonNodeComponent* parrent
 	{
 		parrent->m_pRightNode->CellCountX = FMath::Min(RandomMinCellCountX + (int)((RandomMaxCellCountX - RandomMinCellCountX)*((float)(nodeDepth-1)/(float)maxDepth)), RandomMaxCellCountX);
 		parrent->m_pRightNode->CellCountY = FMath::Min(RandomMinCellCountY + (int)((RandomMaxCellCountY - RandomMinCellCountY)*((float)(nodeDepth - 1) / (float)maxDepth)), RandomMaxCellCountY);
-		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1f*nodeDepth, 1.0f - 0.1f*nodeDepth);
+		std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1*nodeDepth, 1.0 - 0.1*nodeDepth);
 		int index = am.get()->getRandomIndex();
 		parrent->m_pRightNode->UseDoublePath = (index == 0);
-		am = AlisaMethod::create(0.1f*nodeDepth, 1.0f - 0.1f*nodeDepth);
+		am = AlisaMethod::create(0.1*nodeDepth, 1.0 - 0.1*nodeDepth);
 		index = am.get()->getRandomIndex();
 		parrent->m_pRightNode->UseBranchExit = (index == 0);
 		if (parrent->m_pRightNode->UseBranchExit)
@@ -726,7 +726,7 @@ bool ADungeonRoot::buildEntrance(const Cell& cell)
 	{
 		APlayerController* localPlayerController = GetWorld()->GetFirstPlayerController();
 		if (localPlayerController)
-			localPlayerController->GetPawn()->SetActorLocation((FVector(-cell.getIndexY()*CellUnit, cell.getIndexX()*CellUnit, CellUnit)));
+			localPlayerController->GetPawn()->SetActorLocation((FVector(-cell.getIndexY()*CellUnit, cell.getIndexX()*CellUnit, CellUnit*0.5f + 100.0f)));
 	}
 	return true;
 }

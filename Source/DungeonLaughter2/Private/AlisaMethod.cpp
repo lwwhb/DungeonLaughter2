@@ -4,7 +4,7 @@
 #include "AlisaMethod.h"
 #include <deque>
 
-std::shared_ptr<AlisaMethod> AlisaMethod::create(float percent1, ...)
+std::shared_ptr<AlisaMethod> AlisaMethod::create(double percent1, ...)
 {
 	va_list params;
 	va_start(params, percent1);
@@ -14,22 +14,22 @@ std::shared_ptr<AlisaMethod> AlisaMethod::create(float percent1, ...)
 	va_end(params);
 	return ret;
 }
-std::shared_ptr<AlisaMethod> AlisaMethod::createWithPercentArray(std::vector<float>& percentArray)
+std::shared_ptr<AlisaMethod> AlisaMethod::createWithPercentArray(std::vector<double>& percentArray)
 {
 	std::shared_ptr<AlisaMethod> ret(new (std::nothrow) AlisaMethod());
 	if (ret)
 		ret.get()->initWithPercentArray(percentArray);
 	return ret;
 }
-bool AlisaMethod::initWithPercentVariableList(float percent1, va_list args)
+bool AlisaMethod::initWithPercentVariableList(double percent1, va_list args)
 {
-	std::vector<float> percentArray;
+	std::vector<double> percentArray;
 	percentArray.push_back(percent1);
-	float total = percent1;
+	double total = percent1;
 	while (1)
 	{
 		float nextPercent = va_arg(args, double);
-		if (nextPercent < 1.0f && nextPercent >= 0.0f)
+		if (nextPercent < 1.0 && nextPercent >= 0.0)
 		{
 			total += nextPercent;
 			percentArray.push_back(nextPercent);
@@ -37,17 +37,17 @@ bool AlisaMethod::initWithPercentVariableList(float percent1, va_list args)
 		else
 			break;
 	}
-	if(std::abs(total - 1.0f) > 0.00001f)
-		UE_LOG(LogTemp, Fatal, TEXT("The sum of those percents must be 1.0f!"));
+	if(std::abs(total - 1.0) > 0.00001)
+		UE_LOG(LogTemp, Fatal, TEXT("The sum of those percents must be 1.0f! The value is %f"), total);
 	
 	return initWithPercentArray(percentArray);
 }
-bool AlisaMethod::initWithPercentArray(std::vector<float>& percentArray)
+bool AlisaMethod::initWithPercentArray(std::vector<double>& percentArray)
 {
-	std::deque<float> small, large;
+	std::deque<double> small, large;
 	for (int i = 0; i < percentArray.size(); ++i) {
 		percentArray[i] *= percentArray.size();
-		if (percentArray[i] < 1.0f)
+		if (percentArray[i] < 1.0)
 			small.push_back(i);
 		else
 			large.push_back(i);
@@ -62,19 +62,19 @@ bool AlisaMethod::initWithPercentArray(std::vector<float>& percentArray)
 		large.pop_front();
 		m_probArray[s_index] = percentArray[s_index];
 		m_alisaArray[s_index] = l_index;
-		percentArray[l_index] -= 1.0f - percentArray[s_index];
-		if (percentArray[l_index] < 1.0f)
+		percentArray[l_index] -= 1.0 - percentArray[s_index];
+		if (percentArray[l_index] < 1.0)
 			small.push_back(l_index);
 		else
 			large.push_back(l_index);
 	}
 
 	while (!small.empty()) {
-		m_probArray[small.front()] = 1.0f;
+		m_probArray[small.front()] = 1.0;
 		small.pop_front();
 	}
 	while (!large.empty()) {
-		m_probArray[large.front()] = 1.0f;
+		m_probArray[large.front()] = 1.0;
 		large.pop_front();
 	}
 	return true;
@@ -102,7 +102,7 @@ void AlisaMethod::printAlisaArray()
 	UE_LOG(LogTemp, Display, TEXT("%s"), std::string(TCHAR_TO_UTF8(*text)).c_str());
 }
 ///test
-//std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1f,0.2f,0.3f,0.4f);
+//std::shared_ptr<AlisaMethod> am = AlisaMethod::create(0.1,0.2,0.3,0.4);
 //if(am)
 //{
 //    am.get()->printProbArray();
