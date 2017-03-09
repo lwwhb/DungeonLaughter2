@@ -29,7 +29,7 @@ DungeonGenerator::DungeonGenerator()
 DungeonGenerator::~DungeonGenerator()
 {
 }
-bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
+bool DungeonGenerator::setGeneratorSetting(EDungeonType dungeonType, int width, int height, int cellUnit, int minSplitAreaSize, int maxSplitAreaSize, int minAreaSize, int minSpecialAreaSize,
 	bool doublePath, bool branchPath, bool loopBranchPath, bool multiLayerBranchPath, bool isImpasse, float secondaryAreaRatio, EDungeonStyle dungeonStyle)
 {
 	reset();
@@ -83,6 +83,7 @@ bool DungeonGenerator::setGeneratorSetting(int width, int height, int cellUnit, 
 		FMessageDialog::Open(EAppMsgType::Ok, FText::FromString(TEXT("SecondaryAreaRatio value must between 0.0f~0.5f")));
 		return false;
 	}
+	m_DungeonType = dungeonType;
 	m_nWidth = width + 1;
 	m_nHeight = height + 1;
 	m_nCellUnit = cellUnit;
@@ -283,6 +284,8 @@ void DungeonGenerator::reset()
 	m_bIsImpasse = false;
 	m_fSecondaryAreaRatio = 0.0f;
 
+	m_DungeonType = EDungeonType::DTE_Sample;
+
 	m_nWidth = 0;
 	m_nHeight = 0;
 	m_nCellUnit = 10;
@@ -350,6 +353,7 @@ void DungeonGenerator::splitArea(const FBox2D& rect)
 		if (area)
 		{
 			area->setRect(rect);
+			area->setDungeonType(m_DungeonType);
 			m_Areas.push_back(area);
 		}
 	}

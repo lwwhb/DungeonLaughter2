@@ -19,6 +19,9 @@ enum class ECellTypeEnum : uint8
 	CTE_Exit				UMETA(DisplayName = "Exit"),
 	CTE_BranchExit			UMETA(DisplayName = "BranchExit"),
 
+	CTE_Water				UMETA(DisplayName = "Water"),
+	CTE_DeepWater			UMETA(DisplayName = "DeepWater"),
+
 	CTE_StandardDoor		UMETA(DisplayName = "StandardDoor"),
 	CTE_LockedDoor			UMETA(DisplayName = "LockedDoor"),
 	CTE_HiddenDoor			UMETA(DisplayName = "HiddenDoor"),
@@ -91,6 +94,9 @@ public:
 
 	EDirectEnum getDirect() const { return m_Direct; }
 	void setDirect(EDirectEnum direct) { m_Direct = direct; }
+
+	int getTypeIndex() const { return m_nTypeIndex; }
+	void setTypeIndex(int index) { m_nTypeIndex = index; }
 private:
 	int						m_nIndexX;
 	int						m_nIndexY;
@@ -99,4 +105,5 @@ private:
 	EAreaTypeEnum			m_AreaType;
 	EAreaTypeMaskEnum		m_AreaTypeMask;
 	EDirectEnum				m_Direct;
+	int						m_nTypeIndex;	///²Î¿¼Ä§ÊÞ3µØÍ¼Ë÷Òý
 };

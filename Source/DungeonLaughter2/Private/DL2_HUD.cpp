@@ -296,6 +296,14 @@ void ADL2_HUD::DrawFinalMap()
 		else if (cell.getCellType() == ECellTypeEnum::CTE_BranchExit)
 		{
 		}
+		else if (cell.getCellType() == ECellTypeEnum::CTE_Water)
+		{
+			DrawRect(FLinearColor(FColor(176, 224, 230)), cell.getIndexX()*unit, cell.getIndexY()*unit, unit, unit);
+		}
+		else if (cell.getCellType() == ECellTypeEnum::CTE_DeepWater)
+		{
+			DrawRect(FLinearColor(FColor(137, 207, 240)), cell.getIndexX()*unit, cell.getIndexY()*unit, unit, unit);
+		}
 		else if (cell.getCellType() >= ECellTypeEnum::CTE_StandardDoor && cell.getCellType() <= ECellTypeEnum::CTE_BossTreasuryDoor)
 		{
 			DrawRect(FLinearColor::Gray, cell.getIndexX()*unit, cell.getIndexY()*unit, unit, unit);

@@ -6,6 +6,7 @@
 
 Area::Area()
 {
+	m_DungeonType = EDungeonType::DTE_Sample;
 	m_AreaType = EAreaTypeEnum::ATE_Unknown;
 	m_AreaTypeMask = EAreaTypeMaskEnum::ATME_Unknown;
 	m_nWeight = 1;
@@ -82,7 +83,14 @@ void Area::setRect(const FBox2D& rect)
 {
 	m_Rect = rect;
 }
-
+EDungeonType Area::getDungeonType() const
+{
+	return m_DungeonType;
+}
+void Area::setDungeonType(EDungeonType type)
+{
+	m_DungeonType = type;
+}
 EAreaTypeEnum Area::getAreaType() const
 {
 	return m_AreaType;
@@ -113,6 +121,12 @@ bool Area::generateStandardArea()
 {
 	generateCells(ECellTypeEnum::CTE_StandardWall);
 	generateCells(1, ECellTypeEnum::CTE_StandardFloor);
+
+	if (m_DungeonType == EDungeonType::DTE_Sewer)
+	{
+		
+	}
+
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {
 		Door* door = iter->second;
 		Area* other = iter->first;
@@ -177,8 +191,13 @@ bool Area::generatePassageArea()
 }
 bool Area::generateTunnelArea()
 {
-	FVector2D c = getCenter();
+	if (m_DungeonType == EDungeonType::DTE_Sewer)
+	{
+		generateCells(ECellTypeEnum::CTE_StandardWall);
+		generateCells(1, ECellTypeEnum::CTE_DeepWater);
+	}
 
+	FVector2D c = getCenter();
 	if (m_Rect.GetSize().X > m_Rect.GetSize().Y || (m_Rect.GetSize().X == m_Rect.GetSize().Y && FMath::RandRange(0, 1) == 0)) {
 
 		int from = m_Rect.Max.X - 1;
@@ -453,7 +472,14 @@ void AreaInfo::setRect(const FBox2D& rect)
 {
 	m_Rect = rect;
 }
-
+EDungeonType AreaInfo::getDungeonType() const
+{
+	return m_DungeonType;
+}
+void AreaInfo::setDungeonType(EDungeonType type)
+{
+	m_DungeonType = type;
+}
 EAreaTypeEnum AreaInfo::getAreaType() const
 {
 	return m_AreaType;

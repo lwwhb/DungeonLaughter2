@@ -12,6 +12,7 @@ Cell::Cell()
 	m_AreaType		= EAreaTypeEnum::ATE_Unknown;
 	m_AreaTypeMask	= EAreaTypeMaskEnum::ATME_Unknown;
 	m_Direct		= EDirectEnum::DE_Unknown;
+	m_nTypeIndex	= 0;
 }
 
 Cell::~Cell()

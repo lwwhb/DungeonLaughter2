@@ -87,6 +87,7 @@ void UDungeonNodeComponent::copyAreaInfos()
 		{
 			AreaInfo areaInfo;
 			areaInfo.setRect(area->getRect());
+			areaInfo.setDungeonType(area->getDungeonType());
 			areaInfo.setAreaType(area->getAreaType());
 			areaInfo.setAreaTypeMask(area->getAreaTypeMask());
 			std::unordered_map<Area*, Door*>  connectedNeigbourAreas = area->getConnectedAreas();

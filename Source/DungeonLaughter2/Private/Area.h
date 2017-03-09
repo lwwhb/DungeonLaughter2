@@ -10,6 +10,13 @@
 #include "Cell.h"
 #include <unordered_map>
 
+UENUM(BlueprintType)
+enum class EDungeonType : uint8
+{
+	DTE_Sample 	UMETA(DisplayName = "Sample"),
+	DTE_Sewer 	UMETA(DisplayName = "Sewer")
+};
+
 class Area : public PathGraphNode
 {
 public:
@@ -25,6 +32,9 @@ public:
 
 	FBox2D getRect() const;
 	void setRect(const FBox2D& rect);
+
+	EDungeonType getDungeonType() const;
+	void setDungeonType(EDungeonType type);
 
 	EAreaTypeEnum getAreaType() const;
 	void setAreaType(EAreaTypeEnum type);
@@ -56,6 +66,7 @@ private:
 	FVector2D p2xy(const FBox2D& rect, int p);
 private:
 	FBox2D       m_Rect;
+	EDungeonType m_DungeonType;
 
 	EAreaTypeEnum  m_AreaType;
 	EAreaTypeMaskEnum  m_AreaTypeMask;
@@ -73,6 +84,9 @@ public:
 	FBox2D getRect() const;
 	void setRect(const FBox2D& rect);
 
+	EDungeonType getDungeonType() const;
+	void setDungeonType(EDungeonType type);
+
 	EAreaTypeEnum getAreaType() const;
 	void setAreaType(EAreaTypeEnum type);
 
@@ -80,6 +94,7 @@ public:
 	void setAreaTypeMask(EAreaTypeMaskEnum mask);
 private:
 	FBox2D						m_Rect;
+	EDungeonType				m_DungeonType;
 
 	EAreaTypeEnum				m_AreaType;
 	EAreaTypeMaskEnum			m_AreaTypeMask;

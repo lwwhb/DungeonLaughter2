@@ -29,6 +29,8 @@ ADungeonRoot::ADungeonRoot()
 	RandomMinSplitAreaSize = 7;
 	RandomMaxSplitAreaSize = 9;
 
+	DungeonPatternArray.Add(FConversations());
+
 	m_pDungeonRoot				= nullptr;
 	m_pCurrentDungeonNode		= nullptr;
 
@@ -37,10 +39,11 @@ ADungeonRoot::ADungeonRoot()
 	m_strBranchDungeonName		= "";
 	m_strBranchBossDungeonName	= "";
 
-	m_pEntrance = nullptr;
+	m_nDungeonPatternIndex = (uint8)EDungeonPatternType::DPTE_Pattern0;
 }
 ADungeonRoot::~ADungeonRoot()
 {
+	DungeonPatternArray.Empty();
 }
 // Called when the game starts or when spawned
 void ADungeonRoot::BeginPlay()
@@ -68,6 +71,7 @@ bool ADungeonRoot::generateDungeon()
 		return false;
 	}
 	if (!DungeonGenerator::getInstance()->setGeneratorSetting(
+		DungeonType,
 		m_pCurrentDungeonNode->CellCountX,
 		m_pCurrentDungeonNode->CellCountY,
 		CellUnit,
@@ -576,7 +580,7 @@ bool ADungeonRoot::buildMap()
 		UE_LOG(LogTemp, Fatal, TEXT("Clear map failed!"));
 		return false;
 	}
-
+	calculateDungeonPatternIndex();
 	for (int i = 0; i < m_pCurrentDungeonNode->m_Map.size(); ++i)
 	{
 		if (!buildTerrainTile(m_pCurrentDungeonNode->m_Map[i]))
@@ -649,6 +653,15 @@ bool ADungeonRoot::rebuildNavigationMesh()
 	}
 	return true;
 }
+void ADungeonRoot::calculateDungeonPatternIndex()
+{
+	if (!m_pCurrentDungeonNode)
+		return;
+	if(DungeonPatternArray.Num() < 1)
+		UE_LOG(LogTemp, Fatal, TEXT("DungeonPatternArray size must be more than 1"));
+
+	UE_LOG(LogTemp, Display, TEXT("DungeonPatternIndex = %d"), m_nDungeonPatternIndex);
+}
 ATerrainTile* ADungeonRoot::findTerrianTileByCellType(ECellTypeEnum cellType)
 {
 	for (int i = 0; i < m_TerrainTileArray.Num(); ++i)
@@ -682,7 +695,7 @@ bool ADungeonRoot::buildTerrainTile(const Cell& cell)
 		terrainTile = findTerrianTileByCellType(ECellTypeEnum::CTE_StandardFloor);
 		if (!terrainTile)
 		{
-			classType = StandardFloorBlueprintsArray[0];
+			classType = DungeonPatternArray[m_nDungeonPatternIndex].StandardFloorBlueprintsArray[0];
 			terrainTile = GetWorld()->SpawnActor<ATerrainTile>(classType, spawnParms);
 			if (!terrainTile)
 				return false;
@@ -691,13 +704,16 @@ bool ADungeonRoot::buildTerrainTile(const Cell& cell)
 			m_TerrainTileArray.Add(terrainTile);
 		}
 		break;
+	case ECellTypeEnum::CTE_Water:
+	case ECellTypeEnum::CTE_DeepWater:
+		break;
 	case ECellTypeEnum::CTE_StandardWall:
 	case ECellTypeEnum::CTE_PassageWall:
 	case ECellTypeEnum::CTE_HiddenDoor:
 		terrainTile = findTerrianTileByCellType(ECellTypeEnum::CTE_StandardWall);
 		if (!terrainTile)
 		{
-			classType = StandardWallBlueprintsArray[0];
+			classType = DungeonPatternArray[m_nDungeonPatternIndex].StandardWallBlueprintsArray[0];
 			terrainTile = GetWorld()->SpawnActor<ATerrainTile>(classType, spawnParms);
 			if (!terrainTile)
 				return false;
@@ -726,7 +742,7 @@ bool ADungeonRoot::buildEntrance(const Cell& cell)
 	{
 		APlayerController* localPlayerController = GetWorld()->GetFirstPlayerController();
 		if (localPlayerController)
-			localPlayerController->GetPawn()->SetActorLocation((FVector(-cell.getIndexY()*CellUnit, cell.getIndexX()*CellUnit, CellUnit*0.5f + 100.0f)));
+			localPlayerController->GetPawn()->SetActorLocation((FVector(-cell.getIndexY()*CellUnit, cell.getIndexX()*CellUnit, -CellUnit*0.5f )));
 	}
 	return true;
 }
