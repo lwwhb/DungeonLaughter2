@@ -34,6 +34,7 @@ public:
 	bool generateDungeon2dData(std::vector<Cell>& map);
 	void generateCells(int x, int y, int width, int height, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 	void setCellType(int posX, int posY, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
+	void setCellTypeIndex(int posX, int posY, int typeIndex, EDirectEnum direct);
 	void setCellAreaType(int x, int y, int width, int height, EAreaTypeEnum areaType);
 	void wrapCellByCellType(int x, int y, int width, int height, ECellTypeEnum cellType, ECellTypeEnum withCellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 

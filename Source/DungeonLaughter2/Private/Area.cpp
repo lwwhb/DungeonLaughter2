@@ -124,7 +124,9 @@ bool Area::generateStandardArea()
 
 	if (m_DungeonType == EDungeonType::DTE_Sewer)
 	{
-		
+		if (m_Rect.GetSize().X > 4 && m_Rect.GetSize().Y > 4)
+		{
+		}
 	}
 
 	for (auto iter = m_ConnectedAreas.begin(); iter != m_ConnectedAreas.end(); iter++) {

@@ -166,6 +166,12 @@ void DungeonGenerator::setCellType(int posX, int posY, ECellTypeEnum cellType, E
 	//m_Map[index].m_Flag = assignTerrainTileFlag(cellType);
 	m_Map[index].setDirect(direct);
 }
+void DungeonGenerator::setCellTypeIndex(int posX, int posY, int typeIndex, EDirectEnum direct)
+{
+	int index = posX + posY * m_nWidth;
+	m_Map[index].setTypeIndex(typeIndex);
+	m_Map[index].setDirect(direct);
+}
 void DungeonGenerator::setCellAreaType(int x, int y, int width, int height, EAreaTypeEnum areaType)
 {
 	int pos = x + y * m_nWidth;
