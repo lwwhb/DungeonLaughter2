@@ -171,8 +171,8 @@ private:
 	bool rebuildNavigationMesh();
 	void calculateDungeonPatternIndex();
 	ATerrainTile* findTerrianTileByCellType(ECellTypeEnum cellType);
-	bool buildTerrainTile(const Cell& cell);
-	bool buildEntrance(const Cell& cell);
+	bool buildTerrainTile(const CellInfo& cell);
+	bool buildEntrance(const CellInfo& cell);
 private:
 	UDungeonNodeComponent*	m_pDungeonRoot;
 	UDungeonNodeComponent*	m_pCurrentDungeonNode;

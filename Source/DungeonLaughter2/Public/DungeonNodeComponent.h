@@ -78,7 +78,7 @@ public:
 	UDungeonNodeComponent* getRightNode() const { return m_pRightNode; }
 	EVisitedType getVisitedType() const { return m_VisitedType; }
 
-	std::vector<Cell>& getMap() { return m_Map; }
+	std::vector<CellInfo>& getMap() { return m_Map; }
 
 	int getEntranceAreaCount() const { return m_nEntranceAreaCount; }
 	int getExitAreaCount() const { return m_nExitAreaCount; }
@@ -103,7 +103,7 @@ private:
 	UDungeonNodeComponent*	m_pRightNode;		///branch path
 	EVisitedType			m_VisitedType;
 
-	std::vector<Cell>		m_Map;
+	std::vector<CellInfo>	m_Map;
 	std::vector<AreaInfo>	m_AreaInfos;
 
 	int		m_nEntranceAreaCount;

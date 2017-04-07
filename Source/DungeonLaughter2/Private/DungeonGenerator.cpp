@@ -114,7 +114,7 @@ bool DungeonGenerator::setGeneratorSetting(EDungeonType dungeonType, int width, 
 	}
 	return true;
 }
-bool DungeonGenerator::generateDungeon2dData(std::vector<Cell>& map)
+bool DungeonGenerator::generateDungeon2dData(std::vector<CellInfo>& map)
 {
 	if (m_Map.empty())
 	{
@@ -203,7 +203,7 @@ void DungeonGenerator::wrapCellByCellType(int x, int y, int width, int height, E
 		}
 	}
 }
-std::vector<Cell>& DungeonGenerator::getMap()
+std::vector<CellInfo>& DungeonGenerator::getMap()
 {
 	return m_Map;
 }

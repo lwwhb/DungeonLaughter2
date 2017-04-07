@@ -250,7 +250,7 @@ void ADL2_HUD::DrawFinalMap()
 		return;
 	for (size_t i = 0; i < m_pDungeonRoot->getCurrentDungeonNode()->getMap().size(); i++)
 	{
-		Cell cell = m_pDungeonRoot->getCurrentDungeonNode()->getMap()[i];
+		CellInfo cell = m_pDungeonRoot->getCurrentDungeonNode()->getMap()[i];
 		if (cell.getCellType() < ECellTypeEnum::CTE_StandardWall)
 		{
 			switch (cell.getAreaType())

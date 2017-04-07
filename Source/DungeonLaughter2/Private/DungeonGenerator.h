@@ -31,7 +31,7 @@ public:
 	bool setGeneratorSetting(EDungeonType dungeonType, int width, int height, int cellUnit = 10,int minSplitAreaSize = 7, int maxSplitAreaSize = 9, int minAreaSize = 3, int minSpecialAreaSize = 4,
 		bool doublePath = false, bool branchPath = false, bool loopBranchPath = false, bool multiLayerBranchPath = false, bool isImpasse = false, float secondaryAreaRatio = 0.0f,
 		EDungeonStyle dungeonStyle = EDungeonStyle::DSE_Standard);
-	bool generateDungeon2dData(std::vector<Cell>& map);
+	bool generateDungeon2dData(std::vector<CellInfo>& map);
 	void generateCells(int x, int y, int width, int height, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 	void setCellType(int posX, int posY, ECellTypeEnum cellType, EAreaTypeEnum areaType, EAreaTypeMaskEnum areaTypeMask, EDirectEnum direct = EDirectEnum::DE_Unknown);
 	void setCellTypeIndex(int posX, int posY, int typeIndex, EDirectEnum direct);
@@ -46,7 +46,7 @@ public:
 	std::vector<int> getNeighbours21() { return{ 0, +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth, +2, -2, +m_nWidth * 2, -m_nWidth * 2, +1 + m_nWidth * 2,-1 + m_nWidth * 2, +1 - m_nWidth * 2,-1 - m_nWidth * 2, -2 + m_nWidth, +2 + m_nWidth, +2 - m_nWidth, -2 - m_nWidth }; }
 	std::vector<int> getNeighbours25() { return{ 0, +1, -1, +m_nWidth, -m_nWidth, +1 + m_nWidth, +1 - m_nWidth, -1 + m_nWidth, -1 - m_nWidth, +2, -2, +m_nWidth * 2, -m_nWidth * 2, +1 + m_nWidth * 2,-1 + m_nWidth * 2, +1 - m_nWidth * 2,-1 - m_nWidth * 2, -2 + m_nWidth, +2 + m_nWidth, +2 - m_nWidth, -2 - m_nWidth, +2 + m_nWidth * 2, +2 - m_nWidth * 2, -2 + m_nWidth * 2, -2 - m_nWidth * 2 }; }
 
-	std::vector<Cell>& getMap();
+	std::vector<CellInfo>& getMap();
 	std::vector<PathGraphNode*>& getAreas();
 	std::vector<Area*>& getConnectedAreas();
 	std::vector<Area*>& getPivotalAreas();
@@ -98,7 +98,7 @@ private:
 	void generateUnusualAreas();
 	bool generateTraps(Area* area);
 private:
-	std::vector<Cell>	m_Map;
+	std::vector<CellInfo>	m_Map;
 	std::vector<PathGraphNode*>    m_Areas;
 	Area*				m_pAreaEntrance;
 	Area*				m_pAreaExit;

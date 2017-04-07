@@ -68,11 +68,11 @@ enum class EDirectEnum : uint8
 	DE_Backward		UMETA(DisplayName = "Backward"),
 	DE_Unknown		UMETA(DisplayName = "Unknown")
 };
-class Cell
+class CellInfo
 {
 public:
-	Cell();
-	~Cell();
+	CellInfo();
+	~CellInfo();
 
 	int getIndexX() const { return m_nIndexX; }
 	void setIndexX(int indexX) { m_nIndexX = indexX; }

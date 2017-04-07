@@ -3,6 +3,7 @@
 #include "DungeonLaughter2.h"
 #include "AlisaMethod.h"
 #include <deque>
+#include <string>
 
 std::shared_ptr<AlisaMethod> AlisaMethod::create(double percent1, ...)
 {
@@ -37,7 +38,7 @@ bool AlisaMethod::initWithPercentVariableList(double percent1, va_list args)
 		else
 			break;
 	}
-	if(std::abs(total - 1.0) > 0.00001)
+    if(FMath::Abs(total - 1.0) > 0.00001)
 		UE_LOG(LogTemp, Fatal, TEXT("The sum of those percents must be 1.0f! The value is %f"), total);
 	
 	return initWithPercentArray(percentArray);

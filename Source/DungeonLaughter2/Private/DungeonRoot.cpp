@@ -671,7 +671,7 @@ ATerrainTile* ADungeonRoot::findTerrianTileByCellType(ECellTypeEnum cellType)
 	}
 	return nullptr;
 }
-bool ADungeonRoot::buildTerrainTile(const Cell& cell)
+bool ADungeonRoot::buildTerrainTile(const CellInfo& cell)
 {
 	UClass* classType = nullptr;
 	ATerrainTile* terrainTile = nullptr;
@@ -736,7 +736,7 @@ bool ADungeonRoot::buildTerrainTile(const Cell& cell)
 	}
 	return true;
 }
-bool ADungeonRoot::buildEntrance(const Cell& cell)
+bool ADungeonRoot::buildEntrance(const CellInfo& cell)
 {
 	if (cell.getCellType() == ECellTypeEnum::CTE_Entrance)
 	{

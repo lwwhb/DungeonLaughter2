@@ -3,7 +3,7 @@
 #include "DungeonLaughter2.h"
 #include "Cell.h"
 
-Cell::Cell()
+CellInfo::CellInfo()
 {
 	m_nIndexX		= -1;
 	m_nIndexY		= -1;
@@ -15,6 +15,6 @@ Cell::Cell()
 	m_nTypeIndex	= 0;
 }
 
-Cell::~Cell()
+CellInfo::~CellInfo()
 {
 }
