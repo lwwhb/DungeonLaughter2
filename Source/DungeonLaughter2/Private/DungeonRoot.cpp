@@ -4,7 +4,7 @@
 #include "DungeonRoot.h"
 #include "../Private/DungeonGenerator.h"
 #include "../Private/AlisaMethod.h"
-#include "DL2_HUD.h"
+#include "DL2_DungeonDebugHUD.h"
 #include "TerrainTile.h"
 #include "DL2_PlayerStart.h"
 #include "AI/Navigation/NavMeshBoundsVolume.h"
@@ -408,7 +408,7 @@ bool ADungeonRoot::enterDungeon()
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
 		{
-			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 			if (hud)
 				hud->EnableSteps();
 		}
@@ -425,7 +425,7 @@ bool ADungeonRoot::enterDungeon()
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
 		{
-			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 			if (hud)
 				hud->DisableSteps();
 		}
@@ -456,7 +456,7 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
 			{
-				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 				if (hud)
 					hud->EnableSteps();
 			}
@@ -473,7 +473,7 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
 			{
-				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 				if (hud)
 					hud->DisableSteps();
 			}
@@ -498,7 +498,7 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
 			{
-				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 				if (hud)
 					hud->EnableSteps();
 			}
@@ -515,7 +515,7 @@ bool ADungeonRoot::doDownstair(int& depth, bool goBranch)
 			APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 			if (playerController)
 			{
-				ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+				ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 				if (hud)
 					hud->DisableSteps();
 			}
@@ -544,7 +544,7 @@ bool ADungeonRoot::doUpstair(int& depth)
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
 		{
-			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 			if (hud)
 				hud->EnableSteps();
 		}
@@ -561,7 +561,7 @@ bool ADungeonRoot::doUpstair(int& depth)
 		APlayerController* playerController = GetWorld()->GetFirstPlayerController();
 		if (playerController)
 		{
-			ADL2_HUD* hud = static_cast<ADL2_HUD*>(playerController->GetHUD());
+			ADL2_DungeonDebugHUD* hud = static_cast<ADL2_DungeonDebugHUD*>(playerController->GetHUD());
 			if (hud)
 				hud->DisableSteps();
 		}
